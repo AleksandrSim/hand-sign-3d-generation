@@ -1,29 +1,34 @@
 import argparse
 import json
 import os
-
+import sys
 
 # Related third-party imports
-import bpy
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from mpl_toolkits.mplot3d import Axes3D
-import plotly
 import plotly.graph_objects as go
-import tempfile
 import tkinter as tk
 from tkinter import ttk
 import webbrowser
 
 # Local application/library-specific imports
-from process_data import ProcessBVH
-from utils import HAND_BONES, HAND_BONES_CONNECTIONS
+# think how you can efficinetly get rid of this process
+
+current_script_path = os.path.realpath(__file__)
+project_root = os.path.dirname(os.path.dirname(current_script_path))
+sys.path.append(project_root)
+
+from src.process_data.process_data import ProcessBVH
+from src.process_data.utils import HAND_BONES, HAND_BONES_CONNECTIONS, latin_to_cyrillic_mapping, cyrillic_to_latin_mapping
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Description of your script.")
-    parser.add_argument("-i","--input",type=str,required=True, help="Input file",)
-    parser.add_argument("-o","--output",type=str,required=True,help="Output file or directory path.",)
+    parser.add_argument("-i", "--input", type=str,
+                        required=True, help="Input file",)
+    parser.add_argument("-o", "--output", type=str,
+                        required=True, help="Output file or directory path.",)
     args = parser.parse_args()
     return args
 
@@ -38,7 +43,8 @@ class Application(tk.Tk):
         self.geometry("800x600")
 
         # Mapped character label positioned at the top left
-        self.mapped_char_label = ttk.Label(self, text="No character mapped for this frame.")
+        self.mapped_char_label = ttk.Label(
+            self, text="No character mapped for this frame.")
         self.mapped_char_label.pack(side=tk.TOP, anchor=tk.W, padx=10, pady=10)
 
         # The rest of the widgets are packed below the mapped_char_label
@@ -54,22 +60,40 @@ class Application(tk.Tk):
         self.frame_number_entry = ttk.Entry(self)
         self.frame_number_entry.pack(pady=10)
 
-        self.visualize_button = ttk.Button(self, text="Visualize with Plotly", command=lambda: self.visualize(use_plotly=True))
+        self.visualize_button = ttk.Button(
+            self, text="Visualize with Plotly", command=lambda: self.visualize(use_plotly=True))
         self.visualize_button.pack(pady=20)
 
-        self.visualize_mpl_button = ttk.Button(self, text="Visualize with Matplotlib", command=lambda: self.visualize(use_plotly=False))
+        self.visualize_mpl_button = ttk.Button(
+            self, text="Visualize with Matplotlib", command=lambda: self.visualize(use_plotly=False))
         self.visualize_mpl_button.pack(pady=20)
 
         # Placeholder for the plot
         self.plot_frame = ttk.Frame(self)
         self.plot_frame.pack(fill=tk.BOTH, expand=True)
 
+        self.bind('<Right>', lambda event: self.change_frame(1))
+        self.bind('<Left>', lambda event: self.change_frame(-1))
+
+        self.bind('<n>', lambda event: self.jump_to_marked_frame(1))  # 'n' for next
+        self.bind('<m>', lambda event: self.jump_to_marked_frame(-1)) # 'p' for previous
+
 
     def load_existing_mapping(self):
-            if os.path.exists(self.json_filepath):
-                with open(self.json_filepath, 'r') as file:
-                    return json.load(file)
-            return {}
+        if os.path.exists(self.json_filepath):
+            with open(self.json_filepath, 'r') as file:
+                return json.load(file)
+        return {}
+    
+    def change_frame(self, delta):
+        try:
+            current_frame = int(self.frame_number_entry.get())
+            new_frame = max(0, current_frame + delta)  # Ensures frame number doesn't go below 0
+            self.frame_number_entry.delete(0, tk.END)
+            self.frame_number_entry.insert(0, str(new_frame))
+            self.visualize(use_plotly=False)  # or False, depending on your preference
+        except ValueError:
+            print("Current frame number is invalid.")
 
     def visualize(self, use_plotly=False):
         try:
@@ -80,13 +104,16 @@ class Application(tk.Tk):
             character = self.character_entry.get().strip().upper()
 
             if character:
-                # If a new character is entered, update the mapping and label
-                if len(character) == 1:
-                    self.frame_letter_mapping[str(frame_to_visualize)] = character
-                    self.save_mapping()
-                    self.mapped_char_label.config(text=f"Frame {frame_to_visualize} is mapped to '{character}'")
+                # Check if the character exists in the latin_to_cyrillic_mapping
+                if character in latin_to_cyrillic_mapping:
+                    # If a new character is entered, update the mapping and label
+                        self.frame_letter_mapping[str(frame_to_visualize)] = character
+                        self.save_mapping()
+                        self.mapped_char_label.config(text=f"Frame {frame_to_visualize} is mapped to '{character}'")
+
                 else:
-                    print("Please enter a single character.")
+                    # If the character is not in the mapping
+                    self.mapped_char_label.config(text=f"The character '{character}' does not exist in the mapping.")
             elif existing_char:
                 # If there is an existing character for the frame, update the label
                 self.mapped_char_label.config(text=f"Frame {frame_to_visualize} is mapped to '{existing_char}'")
@@ -108,7 +135,24 @@ class Application(tk.Tk):
                 self.show_plot_in_gui(fig)
 
         except ValueError:
-            print("Please enter a valid integer for the frame number.")
+            self.mapped_char_label.config(text="Please enter a valid integer for the frame number.")
+
+
+    def jump_to_marked_frame(self, direction):
+        try:
+            current_frame = int(self.frame_number_entry.get())
+            marked_frames = sorted([int(frame) for frame in self.frame_letter_mapping.keys()])
+
+            if direction > 0:  # Next marked frame
+                next_frames = [frame for frame in marked_frames if frame > current_frame]
+                if next_frames:
+                    self.change_frame(next_frames[0] - current_frame)
+            else:  # Previous marked frame
+                prev_frames = [frame for frame in marked_frames if frame < current_frame]
+                if prev_frames:
+                    self.change_frame(prev_frames[-1] - current_frame)
+        except ValueError:
+            print("Current frame number is invalid.")
 
     def show_plot_in_gui(self, fig):
         # Clear previous plot

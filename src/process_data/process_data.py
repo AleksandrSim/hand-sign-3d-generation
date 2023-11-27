@@ -17,7 +17,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Local application/library specific imports
-from utils import HAND_BONES, HAND_BONES_CONNECTIONS
+from .utils import HAND_BONES, HAND_BONES_CONNECTIONS
 
 
 class ProcessBVH:
@@ -26,11 +26,14 @@ class ProcessBVH:
         self.armature_name = None
         self.import_bvh()
         self.find_armature()
+        bpy.context.scene.frame_end =2147483647
+        self.max_frame_end = bpy.context.scene.frame_end
+        print(self.max_frame_end)
 
     def import_bvh(self):
         bpy.ops.wm.read_factory_settings(use_empty=True)
         bpy.ops.import_anim.bvh(filepath=self.bvh_path)
-    
+
     def set_frame(self, frame):
         bpy.context.scene.frame_set(frame)
 
@@ -61,7 +64,8 @@ class ProcessBVH:
                 continue
             location = self.get_bone_location(joint_name, frame_to_visualize)
             joint_locations[joint_name] = location
-            print(f"{joint_name} Location at Frame {frame_to_visualize}: X={location.x}, Y={location.y}, Z={location.z}")
+            print(
+                f"{joint_name} Location at Frame {frame_to_visualize}: X={location.x}, Y={location.y}, Z={location.z}")
 
         if use_plotly:
             fig = go.Figure()
@@ -77,11 +81,13 @@ class ProcessBVH:
                     loc0 = joint_locations[connection[0]]
                     loc1 = joint_locations[connection[1]]
                     fig.add_trace(go.Scatter3d(
-                        x=[loc0.x, loc1.x], y=[loc0.y, loc1.y], z=[loc0.z, loc1.z],
+                        x=[loc0.x, loc1.x], y=[
+                            loc0.y, loc1.y], z=[loc0.z, loc1.z],
                         mode='lines', line=dict(color='blue', width=2)
                     ))
             fig.update_layout(scene=dict(aspectmode="data"))
-            fig.update_layout(title=f'Scatter Plot - Frame {frame_to_visualize}')
+            fig.update_layout(
+                title=f'Scatter Plot - Frame {frame_to_visualize}')
             if save_path:
                 fig.write_html(save_path + '.html')
             fig.show()
@@ -94,7 +100,8 @@ class ProcessBVH:
                 if connection[0] in joint_locations and connection[1] in joint_locations:
                     loc0 = joint_locations[connection[0]]
                     loc1 = joint_locations[connection[1]]
-                    ax.plot([loc0.x, loc1.x], [loc0.y, loc1.y], [loc0.z, loc1.z], 'blue')
+                    ax.plot([loc0.x, loc1.x], [loc0.y, loc1.y],
+                            [loc0.z, loc1.z], 'blue')
             ax.set_title(f'3D Axes Plot - Frame {frame_to_visualize}')
             if debug:
                 plt.imshow(fig)
@@ -103,15 +110,16 @@ class ProcessBVH:
 
 
 if __name__ == '__main__':
-    BVH_PATH = "/Users/aleksandrsimonyan/Desktop/hand_sign_generation_project/datasets/BVH/3D_alphabet_11_15_2023_BVH.bvh"  # Replace with the path to your BVH file
-    bpy.context.scene.frame_end = 10000  # Set the end frame to the desired value
+    # Replace with the path to your BVH file
+    BVH_PATH = "/Users/aleksandrsimonyan/Desktop/hand_sign_generation_project/datasets/BVH/3D_alphabet_11_15_2023_BVH.bvh"
+    bpy.context.scene.frame_end = 2147483647  # Set the end frame to the desired value
     FRAME_TO_VISUALIZE = 3400  # Frame number to visualize
-    SAVE_PATH = "/Users/aleksandrsimonyan/Desktop/hand_sign_generation_project/process"  # Replace with your desired save path and file name without extension
+    # Replace with your desired save path and file name without extension
+    SAVE_PATH = "/Users/aleksandrsimonyan/Desktop/hand_sign_generation_project/process"
 
     bvh_reader = ProcessBVH(BVH_PATH)
-    
+
     # Visualize as a 3D scatter plot using Plotly and save as HTML
     bvh_reader.visualize_joint_locations(FRAME_TO_VISUALIZE, SAVE_PATH)
-    
-    # Visualize as a 3D Axes plot using Matplotlib and save as an image
+
 #    bvh_reader.visualize_joint_locations(FRAME_TO_VISUALIZE, SAVE_PATH, plot_type='axes3d')

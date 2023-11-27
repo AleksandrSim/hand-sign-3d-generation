@@ -48,7 +48,7 @@ cyrillic_to_latin_mapping = {
     "Г": "G",
     "Д": "D",
     "Е": "E",
-    "Ё": "E",
+    "Ё": "YO",
     "Ж": "Zh",
     "З": "Z",
     "И": "I",
@@ -78,3 +78,5 @@ cyrillic_to_latin_mapping = {
     # The following Cyrillic letters do not have direct Latin equivalents:
     # Ъ, Ь
 }
+
+latin_to_cyrillic_mapping = {value: key for key, value in cyrillic_to_latin_mapping.items()}
