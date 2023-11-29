@@ -1,7 +1,3 @@
-import json
-import os
-
-import bpy
 import numpy as np
 
 
