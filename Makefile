@@ -24,10 +24,19 @@ kill:
 	docker rm $(shell docker container ls -q --filter name=$(PROJECT_NAME)*)
 
 run:
-	docker run --rm -it $(GPUS) \
-		$(NET) $(IPC) \
+	docker run --rm -it $(GPUS) $(NET) $(IPC) \
 		-v $(shell pwd):/workdir/ \
-		$(CONTAINER_NAME)_pred \
+		$(CONTAINER_NAME) \
+		$(IMAGE_NAME) \
+		bash
+
+run-x11:
+	docker run --rm -it $(GPUS) $(NET) $(IPC) \
+		-v /tmp/.X11-unix:/tmp/.X11-unix \
+		-v $(HOME)/.Xauthority:/root/.Xauthority:rw \
+		-e DISPLAY=$(shell echo ${DISPLAY}) \
+		-v $(shell pwd):/workdir/ \
+		$(CONTAINER_NAME)_x11 \
 		$(IMAGE_NAME) \
 		bash
 
