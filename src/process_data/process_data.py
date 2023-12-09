@@ -13,7 +13,7 @@ class ProcessBVH:
         self.armature_name = None
         self.import_bvh()
         self.find_armature()
-        bpy.context.scene.frame_end =2147483647
+        bpy.context.scene.frame_end = 2147483647
         self.max_frame_end = bpy.context.scene.frame_end
         print(self.max_frame_end)
 
@@ -42,7 +42,12 @@ class ProcessBVH:
         armature = bpy.data.objects[self.armature_name]
         return armature.pose.bones[bone_name].head
 
-    def visualize_joint_locations(self, frame_to_visualize, save_path=None, use_plotly=False, debug=False):
+    def visualize_joint_locations(
+            self,
+            frame_to_visualize,
+            save_path=None,
+            use_plotly=False,
+            debug=False):
         joint_names = self.get_all_joint_names()
         joint_locations = {}
         for joint_name in joint_names:
@@ -99,7 +104,8 @@ class ProcessBVH:
 if __name__ == '__main__':
     # Replace with the path to your BVH file
     BVH_PATH = "/Users/aleksandrsimonyan/Desktop/hand_sign_generation_project/datasets/BVH/3D_alphabet_11_15_2023_BVH.bvh"
-    bpy.context.scene.frame_end = 2147483647  # Set the end frame to the desired value
+    # Set the end frame to the desired value
+    bpy.context.scene.frame_end = 2147483647
     FRAME_TO_VISUALIZE = 3400  # Frame number to visualize
     # Replace with your desired save path and file name without extension
     SAVE_PATH = "/Users/aleksandrsimonyan/Desktop/hand_sign_generation_project/process"
