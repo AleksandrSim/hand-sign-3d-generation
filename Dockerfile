@@ -23,7 +23,7 @@ RUN apt-get update && apt -y upgrade && \
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 
 # Install PyTorch
-RUN pip3 install pytorch==2.1.0 torchvision==0.16.0 --extra-index-url \
+RUN pip3 install torch==2.1.1 torchvision==0.16.1 --extra-index-url \
     https://download.pytorch.org/whl/cu118
 
 # Main system requirements
