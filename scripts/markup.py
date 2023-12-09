@@ -1,18 +1,20 @@
-from src.process_data.utils import HAND_BONES, HAND_BONES_CONNECTIONS, latin_to_cyrillic_mapping, cyrillic_to_latin_mapping
 from src.process_data.process_data import ProcessBVH
+from src.process_data.utils import HAND_BONES, HAND_BONES_CONNECTIONS 
+from src.process_data.utils import latin_to_cyrillic_mapping, cyrillic_to_latin_mapping
+
 import argparse
 import json
 import os
 import sys
 
 # Related third-party imports
+import tkinter as tk
+from tkinter import ttk
+import webbrowser
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from mpl_toolkits.mplot3d import Axes3D
 import plotly.graph_objects as go
-import tkinter as tk
-from tkinter import ttk
-import webbrowser
 
 # Local application/library-specific imports
 # think how you can efficinetly get rid of this process
