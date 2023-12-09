@@ -1,20 +1,18 @@
-from src.process_data.process_data import ProcessBVH
-from src.process_data.utils import HAND_BONES, HAND_BONES_CONNECTIONS 
-from src.process_data.utils import latin_to_cyrillic_mapping, cyrillic_to_latin_mapping
-
 import argparse
 import json
 import os
 import sys
-
 # Related third-party imports
 import tkinter as tk
 from tkinter import ttk
 import webbrowser
+
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from mpl_toolkits.mplot3d import Axes3D
 import plotly.graph_objects as go
+
+from src.process_data.process_data import ProcessBVH
 
 # Local application/library-specific imports
 # think how you can efficinetly get rid of this process
@@ -88,12 +86,32 @@ class Application(tk.Tk):
         self.bind('<m>', lambda event: self.jump_to_marked_frame(-1))
 
     def load_existing_mapping(self):
+        """
+        Within initiated json_filepath parameter, searches for the JSON object to read.
+        Returns the dictionary if object is found, otherwise, empty dictionary.
+
+        Args:
+            self
+        
+        Returns:
+            dict: JSON file from json_filepath, otherwise empty dict
+        """
         if os.path.exists(self.json_filepath):
             with open(self.json_filepath, 'r') as file:
                 return json.load(file)
         return {}
 
     def change_frame(self, delta):
+        """
+        Gets the frame we're currently at, and increments it with the parameter argument delta frames
+        If valid frame is provided, calls self.visualize function to take the input key of the frame
+
+        Args:
+            delta (int): number of incremental frames to jump to
+        
+        Returns:
+            Void: calls visualize function
+        """
         try:
             current_frame = int(self.frame_number_entry.get())
             # Ensures frame number doesn't go below 0
@@ -106,7 +124,19 @@ class Application(tk.Tk):
             print("Current frame number is invalid.")
 
     def visualize(self, use_plotly=False):
+        """
+        Takes character from the user input field for the given frame
+        Checks if the character is valid persists the frame to character mapping
+
+        Args:
+            use_plotly (bool): used for the visualize_joint_locations function call input
+        
+        Returns:
+            Void: persists frame to char mapping
+        """
         try:
+            ## Given the .visualize function is used internally only through the change_frame function
+            ## we might as well take the frame_to_visualize, rather than call is independently (thoughts???)
             frame_to_visualize = int(self.frame_number_entry.get())
             existing_char = self.frame_letter_mapping.get(
                 str(frame_to_visualize))
@@ -160,6 +190,17 @@ class Application(tk.Tk):
                 text="Please enter a valid integer for the frame number.")
 
     def jump_to_marked_frame(self, direction):
+        """
+        Given the direction of the marked frames we want to move determines and 
+        returns the delta of the frames to jump
+
+        Args:
+            direction (int): the direction, negative or pos to jump to the marked frame
+        
+        Returns:
+            Void: calls change_frame function with respective delta to jump to the next marked frame
+
+        """
         try:
             current_frame = int(self.frame_number_entry.get())
             marked_frames = sorted(
@@ -179,6 +220,15 @@ class Application(tk.Tk):
             print("Current frame number is invalid.")
 
     def show_plot_in_gui(self, fig):
+        """
+        Clears the previous plot and embeds and displays a new Matplotlib plot within a Tkinter frame
+
+        Args:
+            fig: the previous fig object we will clear
+        
+        Returns:
+            void: draws the new Matplotlib plot within a Tkinter frame
+        """
         # Clear previous plot
         for widget in self.plot_frame.winfo_children():
             widget.destroy()
@@ -190,6 +240,10 @@ class Application(tk.Tk):
         canvas.draw()
 
     def save_mapping(self):
+        """
+        Helper function for updating (writing) the JSON file with the new mapping 
+        
+        """
         with open(self.json_filepath, 'w') as file:
             json.dump(self.frame_letter_mapping, file, indent=4)
 

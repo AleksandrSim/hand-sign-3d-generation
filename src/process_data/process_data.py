@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 
 # Local application/library specific imports
-from .utils import HAND_BONES, HAND_BONES_CONNECTIONS
+from process_data.utils import HAND_BONES, HAND_BONES_CONNECTIONS
 
 
 class ProcessBVH:
@@ -31,6 +31,16 @@ class ProcessBVH:
                 break
 
     def get_all_joint_names(self):
+        """
+        A Method for generating a list of joint_names from the self.armature_name
+
+        Args:
+            self
+        
+        Returns:
+            list: list of pose.bones.name by the order they appear in self.armature_name
+
+        """
         joint_names = []
         armature = bpy.data.objects[self.armature_name]
         for bone in armature.pose.bones:
@@ -38,6 +48,17 @@ class ProcessBVH:
         return joint_names
 
     def get_bone_location(self, bone_name, frame):
+        """
+        For the given the bone name and the frame returns the coordinates
+
+        Args:
+            bone_name: bone name
+            frame (int): frame number
+        
+        Returns:
+            location: location object dtypes with respective (x, y, z) coordinates in 3D space
+            
+        """
         self.set_frame(frame)
         armature = bpy.data.objects[self.armature_name]
         return armature.pose.bones[bone_name].head
@@ -48,6 +69,21 @@ class ProcessBVH:
             save_path=None,
             use_plotly=False,
             debug=False):
+        """
+        A function that iterates through all joints and connections.
+        Produces a 3D visualization for a specific frame number
+
+        Args:
+            frame_to_visualize (int): the frame number for which to produce visualizations
+            save_path (str): default=None, the file directory where the visualization html file is saved
+            use_plotly (bool): default=False, parameter for using plotly, otherwise matplotlib is used
+            debug (bool): default=False, along with the returned object, produces the visualizations
+        
+        Returns:
+            fig: Visualization container with the 3D coordinates for all HAND_BONES and HAND_BONES_CONNECTIONS
+
+        
+        """
         joint_names = self.get_all_joint_names()
         joint_locations = {}
         for joint_name in joint_names:
@@ -56,8 +92,8 @@ class ProcessBVH:
                 continue
             location = self.get_bone_location(joint_name, frame_to_visualize)
             joint_locations[joint_name] = location
-            print(
-                f"{joint_name} Location at Frame {frame_to_visualize}: X={location.x}, Y={location.y}, Z={location.z}")
+            print(f"{joint_name} Location at Frame {frame_to_visualize}: 
+                  X={location.x}, Y={location.y}, Z={location.z}")
 
         if use_plotly:
             fig = go.Figure()
