@@ -6,8 +6,6 @@ import sys
 # Related third-party imports
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from mpl_toolkits.mplot3d import Axes3D
-import plotly.graph_objects as go
 import tkinter as tk
 from tkinter import ttk
 import webbrowser
@@ -20,7 +18,7 @@ project_root = os.path.dirname(os.path.dirname(current_script_path))
 sys.path.append(project_root)
 
 from src.process_data.process_data import ProcessBVH
-from src.process_data.utils import HAND_BONES, HAND_BONES_CONNECTIONS, latin_to_cyrillic_mapping, cyrillic_to_latin_mapping
+from src.process_data.utils import latin_to_cyrillic_mapping
 
 
 def parse_arguments():
@@ -29,6 +27,10 @@ def parse_arguments():
                         required=True, help="Input file",)
     parser.add_argument("-o", "--output", type=str,
                         required=True, help="Output file or directory path.",)
+    parser.add_argument("-e", "--elevation", required=False, default=10, type=str,
+                        help="elevation value for the plot visualization.")    
+    parser.add_argument("-a", "--azimuth", required=False, default=10, type=str,
+                        help="azimuth value for the plot visualization.")      
     args = parser.parse_args()
     return args
 
@@ -41,6 +43,15 @@ class Application(tk.Tk):
         self.frame_letter_mapping = self.load_existing_mapping()
         self.title("BVH Visualizer")
         self.geometry("800x600")
+
+        self.play_button = ttk.Button(self, text="Play", command=self.toggle_auto_switching)
+        self.play_button.pack(pady=10)
+
+        self.auto_switching = False
+        self.auto_switching_task = None
+
+        self.frame_slider = ttk.Scale(self, from_=0, to=self.bvh_reader.max_frame_end, orient=tk.HORIZONTAL, command=self.on_slider_move)
+        self.frame_slider.pack(fill=tk.X, padx=10, pady=10)
 
         # Mapped character label positioned at the top left
         self.mapped_char_label = ttk.Label(
@@ -60,6 +71,8 @@ class Application(tk.Tk):
         self.frame_number_entry = ttk.Entry(self)
         self.frame_number_entry.pack(pady=10)
 
+
+
         self.visualize_button = ttk.Button(
             self, text="Visualize with Plotly", command=lambda: self.visualize(use_plotly=True))
         self.visualize_button.pack(pady=20)
@@ -78,6 +91,15 @@ class Application(tk.Tk):
         self.bind('<n>', lambda event: self.jump_to_marked_frame(1))  # 'n' for next
         self.bind('<m>', lambda event: self.jump_to_marked_frame(-1)) # 'p' for previous
 
+        self.bind('<space>', lambda event: self.toggle_auto_switching())
+
+    def on_slider_move(self, value):
+        # Update frame number entry with the slider value
+        frame_number = int(float(value))
+        self.frame_number_entry.delete(0, tk.END)
+        self.frame_number_entry.insert(0, str(frame_number))
+        self.visualize(use_plotly=False)
+
 
     def load_existing_mapping(self):
         if os.path.exists(self.json_filepath):
@@ -85,13 +107,39 @@ class Application(tk.Tk):
                 return json.load(file)
         return {}
     
+    def toggle_auto_switching(self):
+        if self.auto_switching:
+            self.stop_auto_switching()
+        else:
+            self.start_auto_switching()
+
+    def start_auto_switching(self):
+        self.auto_switching = True
+        self.auto_switch_frame()
+
+    def stop_auto_switching(self):
+        self.auto_switching = False
+        if self.auto_switching_task is not None:
+            self.after_cancel(self.auto_switching_task)
+            self.auto_switching_task = None
+
+    def auto_switch_frame(self):
+        print("Auto switching frame")
+        if self.auto_switching:
+            self.change_frame(1)
+            self.auto_switching_task = self.after(10, self.auto_switch_frame)  # Change frame every 1000 ms (1 second)
+    
     def change_frame(self, delta):
         try:
             current_frame = int(self.frame_number_entry.get())
             new_frame = max(0, current_frame + delta)  # Ensures frame number doesn't go below 0
             self.frame_number_entry.delete(0, tk.END)
             self.frame_number_entry.insert(0, str(new_frame))
-            self.visualize(use_plotly=False)  # or False, depending on your preference
+
+            # Update the slider position
+            self.frame_slider.set(new_frame)
+
+            self.visualize(use_plotly=False)
         except ValueError:
             print("Current frame number is invalid.")
 
@@ -176,6 +224,8 @@ if __name__ == '__main__':
 #    JSON_PATH = '/Users/aleksandrsimonyan/Desktop/annotations.json'
     BVH_PATH = args.input
     JSON_PATH = args.output
-    bvh_reader = ProcessBVH(BVH_PATH)
+    ELEVATION = args.elevation
+    AZIMUTH = args.azimuth
+    bvh_reader = ProcessBVH(BVH_PATH, ELEVATION, AZIMUTH)
     app = Application(bvh_reader, JSON_PATH)
     app.mainloop()
