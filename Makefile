@@ -2,6 +2,7 @@ PROJECT_NAME=hand-sign
 VERSION=0.0.1
 
 IMAGE_NAME=$(PROJECT_NAME):$(VERSION)
+IMAGE_NAME_P310=$(PROJECT_NAME)_p310:$(VERSION)
 CONTAINER_NAME=--name=$(PROJECT_NAME)
 
 GPUS=--gpus=all  # Specifies which GPUs the container can see
@@ -16,6 +17,9 @@ all: build stop run logs
 build:
 	docker build $(BUILD_NET) -t $(IMAGE_NAME) -f Dockerfile .
 
+build-p310:
+	docker build $(BUILD_NET) -t $(IMAGE_NAME_P310) -f Dockerfile-p310 .
+
 stop:
 	docker stop $(shell docker container ls -q --filter name=$(PROJECT_NAME)*)
 
@@ -28,6 +32,13 @@ run:
 		-v $(shell pwd):/workdir/ \
 		$(CONTAINER_NAME) \
 		$(IMAGE_NAME) \
+		bash
+
+run-p310:
+	docker run --rm -it $(GPUS) $(NET) $(IPC) \
+		-v $(shell pwd):/workdir/ \
+		$(CONTAINER_NAME) \
+		$(IMAGE_NAME_P310) \
 		bash
 
 run-x11:
