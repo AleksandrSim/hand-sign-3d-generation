@@ -1,0 +1,31 @@
+FROM python:3.10.13
+
+ENV LANG C.UTF-8
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt -y upgrade && \
+    apt-get -y install software-properties-common apt-utils && \
+    apt-get -y install build-essential cmake unzip git wget curl tmux sysstat \
+    vim libtcmalloc-minimal4 pkgconf autoconf libtool python3-pip python3-pip \
+    libsm6 libxext6 libxrender1 libssl-dev libsndfile1 &&\
+    ln -s /usr/bin/python3.10 /usr/bin/python &&\
+    ln -sf /usr/bin/python3.10 /usr/bin/python3 &&\
+    ln -sf /usr/bin/pip3 /usr/bin/pip &&\
+    apt-get clean &&\
+    apt-get autoremove &&\
+    rm -rf /var/lib/apt/lists/* &&\
+    rm -rf /var/cache/apt/archives/*
+
+# Install PyTorch
+RUN pip install torch==2.1.2 torchvision==0.16.2 --index-url \
+    https://download.pytorch.org/whl/cpu
+
+# Main system requirements
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install -r /tmp/requirements.txt
+
+ENV PYTHONPATH $PYTHONPATH:/workdir
+ENV TORCH_HOME=/workdir/data/.torch
+
+WORKDIR /workdir
+CMD ["sleep", "infinity"]
