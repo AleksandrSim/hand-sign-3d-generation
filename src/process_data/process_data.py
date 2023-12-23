@@ -8,18 +8,40 @@ from process_data.utils import HAND_BONES, HAND_BONES_CONNECTIONS
 
 
 class ProcessBVH:
-    def __init__(self, bvh_path):
-        self.bvh_path = bvh_path
+    def __init__(self, bvh_path, elevation=10, azimuth=10):
+        self.path = bvh_path
         self.armature_name = None
         self.import_bvh()
         self.find_armature()
-        bpy.context.scene.frame_end = 2147483647
-        self.max_frame_end = bpy.context.scene.frame_end
+        bpy.context.scene.frame_end =10000
+        self.set_max_frame_end()
+        self.elevation = elevation
+        self.azimuth = azimuth
+
         print(self.max_frame_end)
+    
+    def set_max_frame_end(self):
+        # Assuming the action is associated with the first armature
+        armatures = [obj for obj in bpy.data.objects if obj.type == 'ARMATURE']
+        if armatures:
+            armature = armatures[0]
+            if armature.animation_data and armature.animation_data.action:
+                action = armature.animation_data.action
+                self.max_frame_end = action.frame_range[1]
+            else:
+                self.max_frame_end = bpy.context.scene.frame_end
+        else:
+            self.max_frame_end = bpy.context.scene.frame_end
 
     def import_bvh(self):
         bpy.ops.wm.read_factory_settings(use_empty=True)
-        bpy.ops.import_anim.bvh(filepath=self.bvh_path)
+
+        if self.path.lower().endswith('.fbx'):
+            bpy.ops.import_scene.fbx(filepath=self.path)
+        elif self.path.lower().endswith('.bvh'):
+            bpy.ops.import_anim.bvh(filepath=self.path)
+        else:
+            raise ValueError("Unsupported file format")
 
     def set_frame(self, frame):
         bpy.context.scene.frame_set(frame)
@@ -87,13 +109,12 @@ class ProcessBVH:
         joint_names = self.get_all_joint_names()
         joint_locations = {}
         for joint_name in joint_names:
-            print(joint_name)
             if joint_name not in HAND_BONES:
                 continue
             location = self.get_bone_location(joint_name, frame_to_visualize)
             joint_locations[joint_name] = location
-            print(f"{joint_name} Location at Frame {frame_to_visualize}: 
-                  X={location.x}, Y={location.y}, Z={location.z}")
+#            print(
+#                f"{joint_name} Location at Frame {frame_to_visualize}: X={location.x}, Y={location.y}, Z={location.z}")
 
         if use_plotly:
             fig = go.Figure()
@@ -130,7 +151,9 @@ class ProcessBVH:
                     loc1 = joint_locations[connection[1]]
                     ax.plot([loc0.x, loc1.x], [loc0.y, loc1.y],
                             [loc0.z, loc1.z], 'blue')
+            ax.view_init(elev=int(self.elevation), azim=int(self.azimuth))
             ax.set_title(f'3D Axes Plot - Frame {frame_to_visualize}')
+
             if debug:
                 plt.imshow(fig)
                 plt.show()
@@ -140,8 +163,7 @@ class ProcessBVH:
 if __name__ == '__main__':
     # Replace with the path to your BVH file
     BVH_PATH = "/Users/aleksandrsimonyan/Desktop/hand_sign_generation_project/datasets/BVH/3D_alphabet_11_15_2023_BVH.bvh"
-    # Set the end frame to the desired value
-    bpy.context.scene.frame_end = 2147483647
+    bpy.context.scene.frame_end = 2147483647  # Set the end frame to the desired value
     FRAME_TO_VISUALIZE = 3400  # Frame number to visualize
     # Replace with your desired save path and file name without extension
     SAVE_PATH = "/Users/aleksandrsimonyan/Desktop/hand_sign_generation_project/process"
