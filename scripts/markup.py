@@ -12,7 +12,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from mpl_toolkits.mplot3d import Axes3D
 import plotly.graph_objects as go
 
-sys.path.append("/Users/vachemacbook/Desktop/Immensus/hand-sign-3d-generation/src")
+sys.path.append("src")
 from process_data.process_data import ProcessBVH
 from process_data.utils import latin_to_cyrillic_mapping
 
@@ -73,8 +73,6 @@ class Application(tk.Tk):
 
         self.frame_number_entry = ttk.Entry(self)
         self.frame_number_entry.pack(pady=10)
-
-
 
         self.visualize_button = ttk.Button(
             self, text="Visualize with Plotly", command=lambda: self.visualize(use_plotly=True))
