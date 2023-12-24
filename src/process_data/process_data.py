@@ -18,6 +18,9 @@ class ProcessBVH:
         self.elevation = elevation
         self.azimuth = azimuth
 
+        self.mpl_fig = None  # For storing a reference to the Matplotlib figure
+        self.mpl_ax = None  
+
         print(self.max_frame_end)
     
     def set_max_frame_end(self):
@@ -141,23 +144,32 @@ class ProcessBVH:
                 fig.write_html(save_path + '.html')
             fig.show()
         else:
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
+            if self.mpl_fig is None or self.mpl_ax is None:
+                # Create the plot if it doesn't exist
+                self.mpl_fig, self.mpl_ax = plt.subplots(subplot_kw={'projection': '3d'})
+                created_new_plot = True
+            else:
+                # Clear existing data for update
+                self.mpl_ax.cla()
+                created_new_plot = False
+
+            # Update plot with new data
             for location in joint_locations.values():
-                ax.scatter(location.x, location.y, location.z, 'o')
+                self.mpl_ax.scatter(location.x, location.y, location.z, 'o')
             for connection in HAND_BONES_CONNECTIONS:
                 if connection[0] in joint_locations and connection[1] in joint_locations:
                     loc0 = joint_locations[connection[0]]
                     loc1 = joint_locations[connection[1]]
-                    ax.plot([loc0.x, loc1.x], [loc0.y, loc1.y],
-                            [loc0.z, loc1.z], 'blue')
-            ax.view_init(elev=int(self.elevation), azim=int(self.azimuth))
-            ax.set_title(f'3D Axes Plot - Frame {frame_to_visualize}')
-
-            if debug:
-                plt.imshow(fig)
+                    self.mpl_ax.plot([loc0.x, loc1.x], [loc0.y, loc1.y], [loc0.z, loc1.z], 'blue')
+            # Set the view angle only if a new plot is created
+            if created_new_plot:
+                self.mpl_ax.view_init(elev=int(self.elevation), azim=int(self.azimuth))
+            self.mpl_ax.set_title(f'3D Axes Plot - Frame {frame_to_visualize}')
+            if debug or created_new_plot:
+                plt.imshow(self.mpl_fig)
                 plt.show()
-            return fig
+
+            return self.mpl_fig
 
 
 if __name__ == '__main__':
