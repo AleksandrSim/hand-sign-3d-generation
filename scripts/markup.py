@@ -33,13 +33,15 @@ def parse_arguments():
     parser.add_argument("-e", "--elevation", required=False, default=10, type=str,
                         help="elevation value for the plot visualization.")    
     parser.add_argument("-a", "--azimuth", required=False, default=10, type=str,
-                        help="azimuth value for the plot visualization.")      
+                        help="azimuth value for the plot visualization.")   
+    parser.add_argument('-s', "--speed", required=False, default=1, type=int,
+                        help='speed of the auto frame change.')   
     args = parser.parse_args()
     return args
 
 
 class Application(tk.Tk):
-    def __init__(self, bvh_reader, json_filepath):
+    def __init__(self, bvh_reader, json_filepath, speed):
         super().__init__()
         self.bvh_reader = bvh_reader
         self.json_filepath = json_filepath
@@ -91,8 +93,9 @@ class Application(tk.Tk):
 
         self.bind('<n>', lambda event: self.jump_to_marked_frame(1))  # 'n' for next
         self.bind('<m>', lambda event: self.jump_to_marked_frame(-1)) # 'p' for previous
-
         self.bind('<space>', lambda event: self.toggle_auto_switching())
+        
+        self.speed = int(speed)
 
     def on_slider_move(self, value):
         # Update frame number entry with the slider value
@@ -135,7 +138,7 @@ class Application(tk.Tk):
     def auto_switch_frame(self):
         print("Auto switching frame")
         if self.auto_switching:
-            self.change_frame(1)
+            self.change_frame(self.speed)
             self.auto_switching_task = self.after(10, self.auto_switch_frame)  # Change frame every 1000 ms (1 second)
 
     def change_frame(self, delta):
@@ -278,6 +281,7 @@ if __name__ == '__main__':
     JSON_PATH = args.output
     ELEVATION = args.elevation
     AZIMUTH = args.azimuth
+    SPEED = args.speed
     bvh_reader = ProcessBVH(BVH_PATH, ELEVATION, AZIMUTH)
-    app = Application(bvh_reader, JSON_PATH)
+    app = Application(bvh_reader, JSON_PATH, SPEED)
     app.mainloop()
