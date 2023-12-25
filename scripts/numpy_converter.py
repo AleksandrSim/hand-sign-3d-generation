@@ -11,7 +11,6 @@ sys.path.append('')
 from src.process_data.utils import HAND_BONES
 
 
-
 def ArgumentParser():
     parser =  argparse.ArgumentParser()
     parser.add_argument('-i', '--input', help = 'Path to the input')
@@ -57,12 +56,13 @@ class NumpyConverter:
         if not joint_names:
             joint_names = [bone.name for bone in fbx.pose.bones]
 
-        length = len(joint_names)
+        length = len(HAND_BONES)
         np_array = np.zeros((length, 3, int(max_frame_number)))
         for frame in range(max_frame_number):
             bpy.context.scene.frame_set(frame)
             # Iterate over each joint
             for idx, joint in enumerate(HAND_BONES):
+                print(len(HAND_BONES))
 
                 print(f'frame_number {frame}')
                 assert joint in joint_names 
@@ -72,7 +72,7 @@ class NumpyConverter:
         return np_array
 
     def save_npz(self, np_array, fbx_file):
-        np.savez(os.path.join(self.output_path, fbx_file.replace('.fbx', '.npz')), data=np_array)
+        np.savez(os.path.join(self.output_path, fbx_file.replace('npz', 'fbx')), data=np_array)
 
 
 if __name__ == '__main__':
