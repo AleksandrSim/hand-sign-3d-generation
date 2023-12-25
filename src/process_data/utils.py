@@ -2,7 +2,7 @@ import numpy as np
 
 
 
-HAND_BONES = [
+HAND_BONES_OLD = [
     'RightFinger1Metacarpal', 'RightFinger1Proximal', 'RightFinger1Distal', 'RightFinger1Tip', 
     'RightFinger2Metacarpal', 'RightFinger2Proximal', 'RightFinger2Medial', 'RightFinger2Distal', 'RightFinger2Tip', 
     'RightFinger3Metacarpal', 'RightFinger3Proximal', 'RightFinger3Medial', 'RightFinger3Distal', 'RightFinger3Tip', 
@@ -35,6 +35,14 @@ HAND_BONES_CONNECTIONS = [
     ('RightFinger5Medial', 'RightFinger5Distal'),
     ('RightFinger5Distal', 'RightFinger5Tip')
 ]
+
+HAND_BONES = [
+              'RightFinger1Metacarpal', 'RightFinger1Proximal', 'RightFinger1Distal', 'RightFinger5Metacarpal',
+                'RightFinger5Proximal', 'RightFinger5Medial', 'RightFinger5Distal', 'RightFinger4Metacarpal',
+                  'RightFinger4Proximal', 'RightFinger4Medial', 'RightFinger4Distal', 'RightFinger3Metacarpal', 
+                  'RightFinger3Proximal', 'RightFinger3Medial', 'RightFinger3Distal', 'RightFinger2Metacarpal', 
+                  'RightFinger2Proximal', 'RightFinger2Medial', 'RightFinger2Distal']
+
 
 
 cyrillic_to_latin_mapping = {
