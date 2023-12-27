@@ -12,3 +12,7 @@ hydra-optuna-sweeper==1.2.0
 tqdm==4.66.1
 mypy==1.7.0
 pytest==7.4.3
+
+
+
+#pyinstaller Execution for installer

@@ -182,6 +182,8 @@ class Application(tk.Tk):
 
             # Get the character from the entry field
             character = self.character_entry.get().strip().upper()
+            print(character)
+            print(latin_to_cyrillic_mapping)
 
             if character:
                 # Check if the character exists in the latin_to_cyrillic_mapping

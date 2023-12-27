@@ -116,8 +116,7 @@ class ProcessBVH:
                 continue
             location = self.get_bone_location(joint_name, frame_to_visualize)
             joint_locations[joint_name] = location
-#            print(
-#                f"{joint_name} Location at Frame {frame_to_visualize}: X={location.x}, Y={location.y}, Z={location.z}")
+            print(f"{joint_name} Location at Frame {frame_to_visualize}: X={location.x}, Y={location.y}, Z={location.z}")
 
         if use_plotly:
             fig = go.Figure()

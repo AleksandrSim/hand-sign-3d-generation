@@ -53,7 +53,7 @@ cyrillic_to_latin_mapping = {
     "Д": "D",
     "Е": "E",
     "Ё": "YO",
-    "Ж": "Zh",
+    "Ж": "ZH",
     "З": "Z",
     "И": "I",
     "Й": "Y",
@@ -69,18 +69,22 @@ cyrillic_to_latin_mapping = {
     "У": "U",
     "Ф": "F",
     "Х": "H",
-    "Ц": "Ts",
-    "Ч": "Ch",
-    "Ш": "Sh",
-    "Щ": "Shch",
+    "Ц": "TS",
+    "Ч": "CH",
+    "Ш": "SH",
+    "Щ": "SHCH",
     "Ъ": "HARD",  # No direct equivalent
     "Ы": "Y",
     "Ь": "SOFT",  # No direct equivalent
     "Э": "E",
-    "Ю": "Yu",
-    "Я": "Ya",
+    "Ю": "YU",
+    "Я": "YA",
     # The following Cyrillic letters do not have direct Latin equivalents:
     # Ъ, Ь
 }
 
+
+
+
 latin_to_cyrillic_mapping = {value: key for key, value in cyrillic_to_latin_mapping.items()}
+
