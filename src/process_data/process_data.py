@@ -21,7 +21,6 @@ class ProcessBVH:
         self.mpl_fig = None  # For storing a reference to the Matplotlib figure
         self.mpl_ax = None  
 
-        print(self.max_frame_end)
     
     def set_max_frame_end(self):
         # Assuming the action is associated with the first armature
@@ -116,7 +115,6 @@ class ProcessBVH:
                 continue
             location = self.get_bone_location(joint_name, frame_to_visualize)
             joint_locations[joint_name] = location
-            print(f"{joint_name} Location at Frame {frame_to_visualize}: X={location.x}, Y={location.y}, Z={location.z}")
 
         if use_plotly:
             fig = go.Figure()

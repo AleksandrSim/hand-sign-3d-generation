@@ -22,7 +22,9 @@ from process_data.utils import latin_to_cyrillic_mapping
 current_script_path = os.path.realpath(__file__)
 project_root = os.path.dirname(os.path.dirname(current_script_path))
 sys.path.append(project_root)
+from PIL import Image, ImageTk
 
+import cv2
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Description of your script.")
@@ -36,34 +38,32 @@ def parse_arguments():
                         help="azimuth value for the plot visualization.")   
     parser.add_argument('-s', "--speed", required=False, default=1, type=int,
                         help='speed of the auto frame change.')   
-    args = parser.parse_args()
-    return args
+    parser.add_argument('-v', "--video", required=True, type=str, help='path to the video')  
+    return parser.parse_args()
 
 
 class Application(tk.Tk):
-    def __init__(self, bvh_reader, json_filepath, speed):
+    def __init__(self, bvh_reader, json_filepath, speed, video=None):
         super().__init__()
         self.bvh_reader = bvh_reader
         self.json_filepath = json_filepath
         self.frame_letter_mapping = self.load_existing_mapping()
-        self.title("BVH Visualizer")
-        self.geometry("800x600")
+        self.speed = int(speed)
+        self.video = cv2.VideoCapture(video) if video else None
 
+        self.title("BVH Visualizer")
+        self.geometry("1200x600")  # Adjust the size as needed
+
+        # Initialize control widgets
         self.play_button = ttk.Button(self, text="Play", command=self.toggle_auto_switching)
         self.play_button.pack(pady=10)
-
-        self.auto_switching = False
-        self.auto_switching_task = None
 
         self.frame_slider = ttk.Scale(self, from_=0, to=self.bvh_reader.max_frame_end, orient=tk.HORIZONTAL, command=self.on_slider_move)
         self.frame_slider.pack(fill=tk.X, padx=10, pady=10)
 
-        # Mapped character label positioned at the top left
-        self.mapped_char_label = ttk.Label(
-            self, text="No character mapped for this frame.")
+        self.mapped_char_label = ttk.Label(self, text="No character mapped for this frame.")
         self.mapped_char_label.pack(side=tk.TOP, anchor=tk.W, padx=10, pady=10)
 
-        # The rest of the widgets are packed below the mapped_char_label
         self.character_label = ttk.Label(self, text="Enter Character:")
         self.character_label.pack(pady=10)
 
@@ -76,26 +76,69 @@ class Application(tk.Tk):
         self.frame_number_entry = ttk.Entry(self)
         self.frame_number_entry.pack(pady=10)
 
-        self.visualize_button = ttk.Button(
-            self, text="Visualize with Plotly", command=lambda: self.visualize(use_plotly=True))
+        self.visualize_button = ttk.Button(self, text="Visualize with Plotly", command=lambda: self.visualize(use_plotly=True))
         self.visualize_button.pack(pady=20)
 
-        self.visualize_mpl_button = ttk.Button(
-            self, text="Visualize with Matplotlib", command=lambda: self.visualize(use_plotly=False))
+        self.visualize_mpl_button = ttk.Button(self, text="Visualize with Matplotlib", command=lambda: self.visualize(use_plotly=False))
         self.visualize_mpl_button.pack(pady=20)
 
-        # Placeholder for the plot
+        # Initialize the plot frame
         self.plot_frame = ttk.Frame(self)
-        self.plot_frame.pack(fill=tk.BOTH, expand=True)
+        self.plot_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
+        # Initialize the video label
+        self.video_label = ttk.Label(self)
+        self.video_label.pack(side=tk.RIGHT, pady=10)
+
+        if self.video is not None and self.video.isOpened():
+            self.total_frames_video = int(self.video.get(cv2.CAP_PROP_FRAME_COUNT))
+        else:
+            self.total_frames_video = 0
+
+        # Display the first frame of the video if available
+        if self.video and self.video.isOpened():
+            self.show_video_frame(0)
+
+        # Bindings
         self.bind('<Right>', lambda event: self.change_frame(1))
         self.bind('<Left>', lambda event: self.change_frame(-1))
-
-        self.bind('<n>', lambda event: self.jump_to_marked_frame(1))  # 'n' for next
-        self.bind('<m>', lambda event: self.jump_to_marked_frame(-1)) # 'p' for previous
+        self.bind('m>', lambda event: self.jump_to_marked_frame(1))  # 'n' for next
+        self.bind('<n>', lambda event: self.jump_to_marked_frame(-1))  # 'p' for previous
         self.bind('<space>', lambda event: self.toggle_auto_switching())
-        
-        self.speed = int(speed)
+
+        self.auto_switching = False
+        self.auto_switching_task = None
+
+        self.video_frame_speed = self.bvh_reader.max_frame_end / self.total_frames_video 
+        print(self.video_frame_speed)
+        self.adjustment = 170
+#        self.current_video_frame = 0
+
+    def show_video_frame(self, frame_number):
+        """
+        Displays a frame from the video in the GUI, resized to fit the layout.
+
+        Args:
+            frame_number (int): The frame number to display.
+        """
+        self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+        ret, frame = self.video.read()
+        if ret:
+            # Resize the frame using OpenCV
+            desired_size = (350, 350)  # Adjust as needed for your layout
+            frame = cv2.resize(frame, desired_size, interpolation=cv2.INTER_AREA)
+
+            # Convert color from BGR to RGB
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            # Convert to PIL Image and then to ImageTk PhotoImage
+            image = Image.fromarray(frame)
+            photo = ImageTk.PhotoImage(image)
+
+            self.video_label.config(image=photo)
+            self.video_label.image = photo  # Keep a reference.
+        else:
+            print("Error: Could not read frame from video.")
 
     def on_slider_move(self, value):
         # Update frame number entry with the slider value
@@ -119,6 +162,7 @@ class Application(tk.Tk):
             with open(self.json_filepath, 'r') as file:
                 return json.load(file)
         return {}
+    
     def toggle_auto_switching(self):
         if self.auto_switching:
             self.stop_auto_switching()
@@ -136,7 +180,6 @@ class Application(tk.Tk):
             self.auto_switching_task = None
 
     def auto_switch_frame(self):
-        print("Auto switching frame")
         if self.auto_switching:
             self.change_frame(self.speed)
             self.auto_switching_task = self.after(10, self.auto_switch_frame)  # Change frame every 1000 ms (1 second)
@@ -152,18 +195,18 @@ class Application(tk.Tk):
         Returns:
             Void: calls visualize function
         """
-        try:
-            current_frame = int(self.frame_number_entry.get())
-            new_frame = max(0, current_frame + delta)  # Ensures frame number doesn't go below 0
-            self.frame_number_entry.delete(0, tk.END)
-            self.frame_number_entry.insert(0, str(new_frame))
+        current_frame = int(self.frame_number_entry.get())
+        new_frame = max(0, current_frame + delta)  # Ensures frame number doesn't go below 0
+        self.frame_number_entry.delete(0, tk.END)
+        self.frame_number_entry.insert(0, str(new_frame))
 
-            # Update the slider position
-            self.frame_slider.set(new_frame)
+        # Update the slider position
+        self.frame_slider.set(new_frame)
 
-            self.visualize(use_plotly=False)
-        except ValueError:
-            print("Current frame number is invalid.")
+        self.visualize(use_plotly=False)
+#            self.show_video_frame(0)
+
+
 
     def visualize(self, use_plotly=False):
         """
@@ -182,9 +225,6 @@ class Application(tk.Tk):
 
             # Get the character from the entry field
             character = self.character_entry.get().strip().upper()
-            print(character)
-            print(latin_to_cyrillic_mapping)
-
             if character:
                 # Check if the character exists in the latin_to_cyrillic_mapping
                 if character in latin_to_cyrillic_mapping:
@@ -212,9 +252,16 @@ class Application(tk.Tk):
                 html_file = self.bvh_reader.visualize_joint_locations(frame_to_visualize, use_plotly=True)
                 webbrowser.open('file://' + html_file)
             else:
+
+                current_frame = int(self.frame_number_entry.get())
+
                 # Matplotlib visualization (embedded in the GUI)
                 fig = self.bvh_reader.visualize_joint_locations(frame_to_visualize, use_plotly=False)
                 self.show_plot_in_gui(fig)
+
+                print(round(current_frame * self.video_frame_speed))
+                self.show_video_frame(int(round(current_frame * self.video_frame_speed)) - self.adjustment)  # Update this line as needed
+
 
         except ValueError:
             self.mapped_char_label.config(text="Please enter a valid integer for the frame number.")
@@ -277,13 +324,18 @@ class Application(tk.Tk):
 
 if __name__ == '__main__':
     args = parse_arguments()
-#    BVH_PATH = "/Users/aleksandrsimonyan/Desktop/hand_sign_generation_project/datasets/BVH/3D_alphabet_11_15_2023_BVH.bvh"  # Replace with the path to your BVH file
-#    JSON_PATH = '/Users/aleksandrsimonyan/Desktop/annotations.json'
+
+    # Debug: Print out the parsed arguments
+
     BVH_PATH = args.input
     JSON_PATH = args.output
     ELEVATION = args.elevation
     AZIMUTH = args.azimuth
     SPEED = args.speed
+    VIDEO = args.video
+
+    # Debug: Print out the video path
+
     bvh_reader = ProcessBVH(BVH_PATH, ELEVATION, AZIMUTH)
-    app = Application(bvh_reader, JSON_PATH, SPEED)
+    app = Application(bvh_reader, JSON_PATH, SPEED, VIDEO)
     app.mainloop()

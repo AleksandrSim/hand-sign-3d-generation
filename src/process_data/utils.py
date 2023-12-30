@@ -46,7 +46,7 @@ HAND_BONES = [
 
 
 cyrillic_to_latin_mapping = {
-    "А": "A",
+    "А": "A",  
     "Б": "B",
     "В": "V",
     "Г": "G",
@@ -66,6 +66,7 @@ cyrillic_to_latin_mapping = {
     "Р": "R",
     "С": "S",
     "Т": "T",
+    "E": "EE",
     "У": "U",
     "Ф": "F",
     "Х": "H",
