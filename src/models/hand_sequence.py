@@ -1,45 +1,68 @@
 import torch
 import torch.nn as nn
 
+from src.process_data.utils import letter_to_index, coordinates_input_gt, letter_to_index
+
+
 class GestureSmoothingLSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, output_size):
+    def __init__(self, num_letters, letter_embedding_dim, hidden_size, num_layers, keypoints, coords, sequence_length):
         super(GestureSmoothingLSTM, self).__init__()
+        self.letter_embedding = nn.Embedding(num_letters, letter_embedding_dim)
+        total_input_size = letter_embedding_dim * 2 + keypoints * coords * 2
+        self.lstm = nn.LSTM(total_input_size, hidden_size, num_layers, batch_first=True)
+
+        self.fc = nn.Linear(hidden_size, keypoints * coords)
+        self.sequence_length = sequence_length
+        self.keypoints = keypoints
+        self.coords = coords
         self.hidden_size = hidden_size
         self.num_layers = num_layers
 
-        # LSTM layer
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
-        
-        # Fully connected layer for smoothing
-        self.fc = nn.Linear(hidden_size, output_size)
+    def forward(self, start_letters, end_letters, start_coords, end_coords):
+        # Embed the start and end letters
+        start_embeds = self.letter_embedding(start_letters)
+        end_embeds = self.letter_embedding(end_letters)
 
-    def forward(self, x):
-        # Initialize hidden and cell states
-        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
-        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
+        # Concatenate embeddings with coordinates
+        combined = torch.cat((start_embeds, end_embeds, start_coords, end_coords), dim=-1)
 
-        # Forward propagate LSTM
-        out, _ = self.lstm(x, (h0, c0))
+        h0 = torch.zeros(self.num_layers, combined.size(0), self.hidden_size)
+        c0 = torch.zeros(self.num_layers, combined.size(0), self.hidden_size)
 
-        # Applying the fully connected layer to each time step
-        out = self.fc(out)
-        return out
+        outputs = torch.zeros(combined.size(0), self.keypoints, self.coords, self.sequence_length)
 
+        for t in range(self.sequence_length):
+            combined_timestep = combined.unsqueeze(1)  # Add sequence dimension
+            lstm_out, (h0, c0) = self.lstm(combined_timestep, (h0, c0))
+            fc_out = self.fc(lstm_out.squeeze(1))
+            outputs[:, :, :, t] = fc_out.view(-1, self.keypoints, self.coords)
+
+        return outputs
+# Example Usage
 if __name__ == '__main__':
     # Define parameters
-    input_size = 3  # XYZ coordinates
-    hidden_size = 128  # number of features in the hidden state
-    num_layers = 2  # number of stacked LSTM layers
-    output_size = 3  # output size (XYZ coordinates after smoothing)
+    num_letters = len(letter_to_index)  # Total number of unique letters
+    letter_embedding_dim = 10  # Size of the letter embedding
+    hidden_size = 128  # Number of features in the hidden state
+    num_layers = 2  # Number of stacked LSTM layers
+    keypoints = 19  # Number of keypoints
+    coords = 3  # Number of coordinates (XYZ)
+    sequence_length = 111  # Length of the sequence to generate
 
-    # Create a model instance
-    model = GestureSmoothingLSTM(input_size, hidden_size, num_layers, output_size)
+    # Create the model
+    model = GestureSmoothingLSTM(num_letters, letter_embedding_dim, hidden_size, num_layers, keypoints, coords, sequence_length)
 
-    # Generate a dummy input (e.g., batch_size=1, sequence_length=10, input_size=3)
-    dummy_input = torch.randn(1, 10, input_size)
 
-    # Forward pass
-    output = model(dummy_input)
+
+    start_letters = torch.tensor([letter_to_index['A']], dtype=torch.long)  # Shape: [1]
+    end_letters = torch.tensor([letter_to_index['V']], dtype=torch.long)  # Shape: [1]
+
+    # Reshape your coordinates and ensure they are float tensors
+    start_coords = torch.tensor(coordinates_input_gt['A'].reshape(-1), dtype=torch.float32).unsqueeze(0)  # Shape: [1, 57]
+    end_coords = torch.tensor(coordinates_input_gt['B'].reshape(-1), dtype=torch.float32).unsqueeze(0)  
+        
+    print(end_coords.shape)
+    output = model(start_letters, end_letters, start_coords, end_coords)
 
     # Print output shape
     print("Output Shape:", output.shape)

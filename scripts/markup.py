@@ -23,6 +23,7 @@ current_script_path = os.path.realpath(__file__)
 project_root = os.path.dirname(os.path.dirname(current_script_path))
 sys.path.append(project_root)
 from PIL import Image, ImageTk
+from tkinter import simpledialog
 
 import cv2
 
@@ -38,13 +39,18 @@ def parse_arguments():
                         help="azimuth value for the plot visualization.")   
     parser.add_argument('-s', "--speed", required=False, default=1, type=int,
                         help='speed of the auto frame change.')   
-    parser.add_argument('-v', "--video", required=True, type=str, help='path to the video')  
+    parser.add_argument('-v', "--video", required=True, type=str, help='path to the video') 
+    parser.add_argument('-ad', "--adjustment", required=False, type=int, default=170, help='Adjustment of the frame')  
+ 
     return parser.parse_args()
 
 
 class Application(tk.Tk):
-    def __init__(self, bvh_reader, json_filepath, speed, video=None):
+    def __init__(self, bvh_reader, json_filepath, speed, video=None, adjustment=170):
         super().__init__()
+
+#        self.args = self.get_gui_arguments()
+
         self.bvh_reader = bvh_reader
         self.json_filepath = json_filepath
         self.frame_letter_mapping = self.load_existing_mapping()
@@ -102,7 +108,7 @@ class Application(tk.Tk):
         # Bindings
         self.bind('<Right>', lambda event: self.change_frame(1))
         self.bind('<Left>', lambda event: self.change_frame(-1))
-        self.bind('m>', lambda event: self.jump_to_marked_frame(1))  # 'n' for next
+        self.bind('<m>', lambda event: self.jump_to_marked_frame(1))  # 'n' for next
         self.bind('<n>', lambda event: self.jump_to_marked_frame(-1))  # 'p' for previous
         self.bind('<space>', lambda event: self.toggle_auto_switching())
 
@@ -110,9 +116,31 @@ class Application(tk.Tk):
         self.auto_switching_task = None
 
         self.video_frame_speed = self.bvh_reader.max_frame_end / self.total_frames_video 
-        print(self.video_frame_speed)
-        self.adjustment = 170
+        self.adjustment = adjustment
 #        self.current_video_frame = 0
+
+    def get_gui_arguments(self):
+        self.withdraw()  # Hide the main window while collecting inputs
+
+        # Collect arguments using dialog boxes
+        input_file = simpledialog.askstring("Input", "Enter input file path:")
+        output_file = simpledialog.askstring("Output", "Enter output file or directory path:")
+        elevation = simpledialog.askstring("Elevation", "Enter elevation value:", initialvalue="10")
+        azimuth = simpledialog.askstring("Azimuth", "Enter azimuth value:", initialvalue="10")
+        speed = simpledialog.askinteger("Speed", "Enter speed of the auto frame change:", initialvalue=1)
+        video = simpledialog.askstring("Video", "Enter path to the video:")
+        adjustment = simpledialog.askinteger("Adjustment", "Enter adjustment of the frame:", initialvalue=170)
+
+        return {
+            "input": input_file,
+            "output": output_file,
+            "elevation": elevation,
+            "azimuth": azimuth,
+            "speed": speed,
+            "video": video,
+            "adjustment": adjustment
+        }
+
 
     def show_video_frame(self, frame_number):
         """
@@ -259,12 +287,11 @@ class Application(tk.Tk):
                 fig = self.bvh_reader.visualize_joint_locations(frame_to_visualize, use_plotly=False)
                 self.show_plot_in_gui(fig)
 
-                print(round(current_frame * self.video_frame_speed))
                 self.show_video_frame(int(round(current_frame * self.video_frame_speed)) - self.adjustment)  # Update this line as needed
-
 
         except ValueError:
             self.mapped_char_label.config(text="Please enter a valid integer for the frame number.")
+            
 
     def jump_to_marked_frame(self, direction):
         """
@@ -333,9 +360,10 @@ if __name__ == '__main__':
     AZIMUTH = args.azimuth
     SPEED = args.speed
     VIDEO = args.video
+    ADJUSTMENT = args.adjustment
 
     # Debug: Print out the video path
 
     bvh_reader = ProcessBVH(BVH_PATH, ELEVATION, AZIMUTH)
-    app = Application(bvh_reader, JSON_PATH, SPEED, VIDEO)
+    app = Application(bvh_reader, JSON_PATH, SPEED, VIDEO, ADJUSTMENT)
     app.mainloop()
