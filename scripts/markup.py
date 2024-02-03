@@ -39,7 +39,7 @@ def parse_arguments():
                         help="azimuth value for the plot visualization.")   
     parser.add_argument('-s', "--speed", required=False, default=1, type=int,
                         help='speed of the auto frame change.')   
-    parser.add_argument('-v', "--video", required=True, type=str, help='path to the video') 
+    parser.add_argument('-v', "--video", required=False, type=str, help='path to the video') 
     parser.add_argument('-ad', "--adjustment", required=False, type=int, default=170, help='Adjustment of the frame')  
  
     return parser.parse_args()
@@ -114,8 +114,9 @@ class Application(tk.Tk):
 
         self.auto_switching = False
         self.auto_switching_task = None
+        if self.video:
 
-        self.video_frame_speed = self.bvh_reader.max_frame_end / self.total_frames_video 
+            self.video_frame_speed = self.bvh_reader.max_frame_end / self.total_frames_video 
         self.adjustment = adjustment
 #        self.current_video_frame = 0
 
@@ -286,8 +287,9 @@ class Application(tk.Tk):
                 # Matplotlib visualization (embedded in the GUI)
                 fig = self.bvh_reader.visualize_joint_locations(frame_to_visualize, use_plotly=False)
                 self.show_plot_in_gui(fig)
+                if self.video:
 
-                self.show_video_frame(int(round(current_frame * self.video_frame_speed)) - self.adjustment)  # Update this line as needed
+                    self.show_video_frame(int(round(current_frame * self.video_frame_speed)) - self.adjustment)  # Update this line as needed
 
         except ValueError:
             self.mapped_char_label.config(text="Please enter a valid integer for the frame number.")

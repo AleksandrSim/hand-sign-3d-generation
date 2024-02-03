@@ -36,8 +36,9 @@ class GestureSmoothingLSTM(nn.Module):
             lstm_out, (h0, c0) = self.lstm(combined_timestep, (h0, c0))
             fc_out = self.fc(lstm_out.squeeze(1))
             outputs[:, :, :, t] = fc_out.view(-1, self.keypoints, self.coords)
-
         return outputs
+    
+    
 # Example Usage
 if __name__ == '__main__':
     # Define parameters
@@ -52,7 +53,11 @@ if __name__ == '__main__':
     # Create the model
     model = GestureSmoothingLSTM(num_letters, letter_embedding_dim, hidden_size, num_layers, keypoints, coords, sequence_length)
 
+    total_params = sum(p.numel() for p in model.parameters())
+    total_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
+    # Test inference speed
+    import time
 
     start_letters = torch.tensor([letter_to_index['A']], dtype=torch.long)  # Shape: [1]
     end_letters = torch.tensor([letter_to_index['V']], dtype=torch.long)  # Shape: [1]
@@ -62,7 +67,11 @@ if __name__ == '__main__':
     end_coords = torch.tensor(coordinates_input_gt['B'].reshape(-1), dtype=torch.float32).unsqueeze(0)  
         
     print(end_coords.shape)
+    start_time = time.time()
     output = model(start_letters, end_letters, start_coords, end_coords)
-
+    end_time = time.time()
     # Print output shape
+    inference_time = end_time - start_time
+
+    print(total_params), print(total_trainable_params), print(inference_time)
     print("Output Shape:", output.shape)

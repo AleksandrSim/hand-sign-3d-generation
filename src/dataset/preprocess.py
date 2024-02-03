@@ -1,13 +1,10 @@
 import os
 import sys
 import json
-
-
+                                            
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
-
-#sys.path.append('/Users/aleksandrsimonyan/hand-sign-3d-generation')
 
 from src.process_data.utils import HAND_BONES, HAND_BONES_CONNECTIONS
 
@@ -101,8 +98,8 @@ if __name__ == '__main__':
     data_obj = HandSignData(file_path, annotations)
 
     # Specify the start and end letters, and whether to show the range
-    start_letter = 'T'
-    end_letter = 'U'
+    start_letter = 'A'
+    end_letter = 'B'
     show_range = True  # Set to False to show only the start letter
 
     plotter = HandSignPlotter(data_obj, start_letter, end_letter, show_range=True, speed=10)

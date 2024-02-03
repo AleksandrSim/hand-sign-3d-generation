@@ -72,7 +72,7 @@ class NumpyConverter:
         return np_array
 
     def save_npz(self, np_array, fbx_file):
-        np.savez(os.path.join(self.output_path, fbx_file.replace('npz', 'fbx')), data=np_array)
+        np.savez(os.path.join(self.output_path, fbx_file.replace('fbx', 'npz')), data=np_array)
 
 
 if __name__ == '__main__':

@@ -122,4 +122,4 @@ if __name__ == '__main__':
     save_path = '/Users/aleksandrsimonyan/Desktop/hand_sign_generation_project/model_weights'
     # Assuming train_dataset and val_dataset are defined
     trainer = Trainer(model, dataset,save_path=save_path)
-    trainer.train(num_epochs=300)
+    trainer.train(num_epochs=500)

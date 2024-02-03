@@ -20,6 +20,6 @@ def plot_hand_sign(coordinates, title='Hand Sign'):
     plt.show()
 
 # Coordinates for the letter 'S'
-plot_hand_sign(coordinates_input_gt['O'])
+plot_hand_sign(coordinates_input_gt['B'])
 
 
