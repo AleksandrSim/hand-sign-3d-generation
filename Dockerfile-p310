@@ -11,7 +11,7 @@ RUN apt-get update && apt -y upgrade && \
     apt-get -y install build-essential cmake unzip git wget curl tmux sysstat \
     vim libtcmalloc-minimal4 pkgconf autoconf libtool \
     python3.10 python3.10-dev python3.10-distutils python3.10-tk python3-pip \
-    libsm6 libxext6 libxrender1 libssl-dev libsndfile1 &&\
+    libsm6 libxext6 libxrender1 libssl-dev libsndfile1 libgl1 libegl1 &&\
     ln -s /usr/bin/python3.10 /usr/bin/python &&\
     ln -sf /usr/bin/python3.10 /usr/bin/python3 &&\
     ln -sf /usr/bin/pip3 /usr/bin/pip &&\

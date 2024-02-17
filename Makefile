@@ -40,6 +40,9 @@ run:
 
 run-p310:
 	docker run --rm -it $(GPUS) $(NET) $(IPC) \
+		-v /tmp/.X11-unix:/tmp/.X11-unix \
+		-v $(HOME)/.Xauthority:/root/.Xauthority:rw \
+		-e DISPLAY=$(shell echo ${DISPLAY}) \
 		-v $(shell pwd):/workdir/ \
 		$(CONTAINER_NAME) \
 		$(IMAGE_NAME_P310) \
