@@ -1,11 +1,9 @@
-import os
-import numpy 
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from src.process_data.aggregated_npz import char_index_map
 
 from src.process_data.utils import HAND_BONES, HAND_BONES_CONNECTIONS
+from src.process_data.aggregated_npz import char_index_map
+
 HAND_BONES_INDEXES = list(range(19))
 
 
@@ -17,6 +15,7 @@ char_index_map = {
 }
 
 # Assuming HAND_BONES, HAND_BONES_CONNECTIONS, and char_index_map are defined as before
+
 
 class HandTransitionVisualizer:
     def __init__(self, npz_path, word, visualize=True):
@@ -43,9 +42,11 @@ class HandTransitionVisualizer:
                 start_index = char_index_map[start_char]
                 end_index = char_index_map[end_char]
                 transition_data = self.data[start_index, end_index, :, :, :]
-                non_zero_frames_mask = np.any(transition_data != 0, axis=(0, 1))
+                non_zero_frames_mask = np.any(
+                    transition_data != 0, axis=(0, 1))
                 if non_zero_frames_mask.size > 0:
-                    transitions_data.append(transition_data[:, :, non_zero_frames_mask])
+                    transitions_data.append(
+                        transition_data[:, :, non_zero_frames_mask])
         return transitions_data
 
     def plot_frame(self, transition_index, frame_index):
@@ -53,11 +54,12 @@ class HandTransitionVisualizer:
             self.ax.clear()
             transition_data = self.transitions_data[transition_index]
             frame_data = transition_data[:, :, frame_index]
-            self.ax.set_title(f"Transition {transition_index + 1}/{len(self.transitions_data)}, Frame: {frame_index + 1}/{transition_data.shape[-1]}")
-            
+            self.ax.set_title(
+                f"Transition {transition_index + 1}/{len(self.transitions_data)}, Frame: {frame_index + 1}/{transition_data.shape[-1]}")
+
             for x, y, z in frame_data.T:
                 self.ax.scatter(x, y, z, c='r', marker='o')
-            
+
             for start_bone, end_bone in HAND_BONES_CONNECTIONS:
                 start_idx = HAND_BONES.index(start_bone)
                 end_idx = HAND_BONES.index(end_bone)
@@ -70,25 +72,31 @@ class HandTransitionVisualizer:
         if self.visualize:
             if event.key == 'right':
                 self.current_frame += 1
-                if self.current_frame >= self.transitions_data[self.current_transition].shape[-1]:
+                if self.current_frame >= self.transitions_data[
+                        self.current_transition].shape[-1]:
                     self.current_frame = 0
                     self.current_transition += 1
                     if self.current_transition >= len(self.transitions_data):
-                        self.current_transition = 0  # Loop back to the first transition
+                        # Loop back to the first transition
+                        self.current_transition = 0
             elif event.key == 'left':
                 self.current_frame -= 1
                 if self.current_frame < 0:
                     self.current_transition -= 1
                     if self.current_transition < 0:
-                        self.current_transition = len(self.transitions_data) - 1  # Loop to the last transition
-                    self.current_frame = self.transitions_data[self.current_transition].shape[-1] - 1
+                        # Loop to the last transition
+                        self.current_transition = len(
+                            self.transitions_data) - 1
+                    self.current_frame = self.transitions_data[
+                        self.current_transition].shape[-1] - 1
 
             self.plot_frame(self.current_transition, self.current_frame)
 
     def visualize_or_return_data(self):
         if self.visualize:
             if self.transitions_data:
-                self.plot_frame(0, 0)  # Start with the first frame of the first transition
+                # Start with the first frame of the first transition
+                self.plot_frame(0, 0)
                 plt.show()
             else:
                 print("No valid transitions found for the given word.")
@@ -96,15 +104,17 @@ class HandTransitionVisualizer:
             # Return transitions data if not visualizing
             return self.transitions_data
 
-# Example usage
-npz_path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_reverse_inc.npz'
-word = "ARARAT"
-visualize = True  # Set to False to return data instead of visualizing
 
-visualizer = HandTransitionVisualizer(npz_path, word, visualize=visualize)
-if visualize:
-    visualizer.visualize_or_return_data()
-else:
-    transitions_data = visualizer.visualize_or_return_data()
-    # Handle transitions_data as needed, e.g., print or process further
-    print(transitions_data)
+if __name__ == '__main__':
+    # Example usage
+    npz_path = '/workdir/data/sequence/unified_data_reverse_inc.npz'
+    word = "ARARAT"
+    visualize = False  # Set to False to return data, True - for visualization
+
+    visualizer = HandTransitionVisualizer(npz_path, word, visualize=visualize)
+    if visualize:
+        visualizer.visualize_or_return_data()
+    else:
+        transitions_data = visualizer.visualize_or_return_data()
+        # Handle transitions_data as needed, e.g., print or process further
+        print(transitions_data)
