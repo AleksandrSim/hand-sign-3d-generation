@@ -78,6 +78,7 @@ cyrillic_to_latin_mapping = {
     "Э": "EE",
     "Ю": "YU",
     "Я": "YA",
+    "space": "_"
     # The following Cyrillic letters do not have direct Latin equivalents:
     #  Ъ, Ь
 }

@@ -23,6 +23,8 @@ class HandTransitionVisualizer:
         self.word = word
         self.visualize = visualize
         self.data = self.load_data(npz_path)
+        print(self.data.shape)
+        exit()
         self.transitions_data = self.get_transitions_data()
         if visualize:
             self.current_transition = 0
@@ -98,7 +100,7 @@ class HandTransitionVisualizer:
 
 # Example usage
 npz_path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_reverse_inc.npz'
-word = "ARARAT"
+word = "MANUSHAK"
 visualize = True  # Set to False to return data instead of visualizing
 
 visualizer = HandTransitionVisualizer(npz_path, word, visualize=visualize)

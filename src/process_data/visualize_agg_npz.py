@@ -29,7 +29,6 @@ class HandTransitionVisualizer:
         self.ax = self.fig.add_subplot(111, projection='3d')
         plt.gcf().canvas.mpl_connect('key_press_event', self.on_key)
         self.transition_data  = self.data[self.start_index, self.end_index, :,:,:]
-        print(self.transition_data.shape)
         non_zero_frames_mask = np.any(self.transition_data != 0, axis=(0, 1))
         self.transition_data = self.transition_data[:, :,  non_zero_frames_mask]
 
