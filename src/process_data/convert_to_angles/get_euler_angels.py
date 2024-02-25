@@ -33,7 +33,6 @@ class JointDataConverter:
         # Pitch is the angle between the bone_vector and its projection on the XY plane
         pitch = np.arctan2(bone_vector_norm[:, :, 2, :], np.sqrt(bone_vector_norm[:, :, 0, :]**2 + bone_vector_norm[:, :, 1, :]**2))
         
-        # Simplified roll calculation using the Z component directly
         cos_angle = bone_plane_normal_norm[:, :, 2, :]  # Directly use the Z component for cos_angle
         roll = np.arccos(np.clip(cos_angle, -1.0, 1.0))
         
@@ -43,23 +42,36 @@ class JointDataConverter:
         return euler_angles
     
     def convert_to_euler(self):
-        # Assume HAND_BONES is defined with the correct order of bone names
+        # Initialize the euler_angles dictionary for each bone
         self.euler_angles = {bone: np.zeros((32, 32, 3, 1050)) for bone in HAND_BONES}
         
-        for i, bone in enumerate(HAND_BONES):
-            if i == 0 or i == len(HAND_BONES) - 1:
-                # Skip the first and last bone since they don't have both a parent and a child
+        for connection in HAND_BONES_CONNECTIONS:
+            parent_name, bone = connection  
+            
+            # Find the child name based on the next connection
+            # This checks if the current bone acts as a parent in any subsequent connection
+            child_candidates = [child for p, child in HAND_BONES_CONNECTIONS if p == bone]
+            if not child_candidates:
                 continue
+            child_name = child_candidates[0]  # Assuming each bone has at most one child in this setup
             
-            parent_name = HAND_BONES[i-1]
-            child_name = HAND_BONES[i+1]
+            idx_parent = HAND_BONES.index(parent_name)
+            idx_bone = HAND_BONES.index(bone)
+            idx_child = HAND_BONES.index(child_name)
+            print(parent_name)
+            print(bone)
+            print(child_name)
+            print('one joint')
+        
             
-            parent_pos = self.joint_data[:, :, :, i-1, :]
-            joint_pos = self.joint_data[:, :, :, i, :]
-            child_pos = self.joint_data[:, :, :, i+1, :]
+            # Extract positions for parent, current, and child bones
+            parent_pos = self.joint_data[:, :, :, idx_parent, :]
+            joint_pos = self.joint_data[:, :, :, idx_bone, :]
+            child_pos = self.joint_data[:, :, :, idx_child, :]
             
             # Calculate Euler angles and store them
             self.euler_angles[bone] = self.calculate_euler_angles(parent_pos, joint_pos, child_pos)
+
     
     def save_data(self, save_path):
         # Save the euler_angles dictionary to a .npz file
@@ -74,9 +86,8 @@ if __name__ == "__main__":
     name_without_extension = os.path.splitext(base_name)[0]
     save_dir = os.path.dirname(file_path)
     save_path = os.path.join(save_dir, f"{name_without_extension}_euler_angles.npz")
-    print(converter.euler_angles.keys())
     print(converter.euler_angles['RightFinger2Distal'].shape)
-    exit()
+
 
     converter.save_data(save_path)
     print(f"Euler angles saved to {save_path}")
