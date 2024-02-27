@@ -17,11 +17,47 @@ char_index_map = {
 # Assuming HAND_BONES, HAND_BONES_CONNECTIONS, and char_index_map are defined as before
 
 
+
+def filter_non_zero(seq: np.array) -> np.array:
+
+    """
+    Filters the input array to remove trailing zeros across all dimensions
+    based on the first occurrence of an all-zero slice in the last dimension.
+    
+    Args:
+    seq (np.ndarray): A numpy array with an expected shape of (3, 19, 1050).
+    
+    Returns:
+    np.ndarray: The filtered numpy array with trailing zeros removed in the last dimension.
+    
+    Note:
+    This function asserts that the input array matches the expected shape.
+    """
+
+    assert seq.shape == (3, 19, 1050), "Input array does not match the expected shape (3, 19, 1050)"
+    
+    non_zero_mask = np.all(seq == 0, axis=(0,1))
+    index = np.argmax(non_zero_mask)
+    seq = seq[:,:, :index]
+    return seq
+
+
+
 class HandTransitionVisualizer:
     def __init__(self, npz_path, word, visualize=True):
         self.word = word
         self.visualize = visualize
+
         self.data = self.load_data(npz_path)
+        ret = filter_non_zero(self.data[0,5])
+        print(ret.shape)
+        for i in range(ret.shape[1]):  # Loop through each joint
+            # Extract xyz coordinates for current joint
+            xyz_coordinates = ret[:, i, 0]
+            print(f"Joint {i+1} xyz:")
+            print(xyz_coordinates)
+        exit()
+
         self.transitions_data = self.get_transitions_data()
         if visualize:
             self.current_transition = 0
@@ -31,7 +67,7 @@ class HandTransitionVisualizer:
             plt.gcf().canvas.mpl_connect('key_press_event', self.on_key)
 
     def load_data(self, npz_path):
-        return np.load(npz_path)['data']
+        return np.array(np.load(npz_path)['data'])
 
     def get_transitions_data(self):
         transitions_data = []
@@ -42,6 +78,7 @@ class HandTransitionVisualizer:
                 start_index = char_index_map[start_char]
                 end_index = char_index_map[end_char]
                 transition_data = self.data[start_index, end_index, :, :, :]
+
                 non_zero_frames_mask = np.any(
                     transition_data != 0, axis=(0, 1))
                 if non_zero_frames_mask.size > 0:
@@ -53,7 +90,9 @@ class HandTransitionVisualizer:
         if self.visualize and transition_index < len(self.transitions_data):
             self.ax.clear()
             transition_data = self.transitions_data[transition_index]
+
             frame_data = transition_data[:, :, frame_index]
+            print(frame_data.shape)
             self.ax.set_title(
                 f"Transition {transition_index + 1}/{len(self.transitions_data)}, Frame: {frame_index + 1}/{transition_data.shape[-1]}")
 
@@ -107,9 +146,9 @@ class HandTransitionVisualizer:
 
 if __name__ == '__main__':
     # Example usage
-    npz_path = '/workdir/data/sequence/unified_data_reverse_inc.npz'
+    npz_path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_reverse_inc.npz'
     word = "ARARAT"
-    visualize = False  # Set to False to return data, True - for visualization
+    visualize = True  # Set to False to return data, True - for visualization
 
     visualizer = HandTransitionVisualizer(npz_path, word, visualize=visualize)
     if visualize:
@@ -117,4 +156,3 @@ if __name__ == '__main__':
     else:
         transitions_data = visualizer.visualize_or_return_data()
         # Handle transitions_data as needed, e.g., print or process further
-        print(transitions_data)

@@ -35,22 +35,26 @@ class HandTransitionVisualizer:
 
 
     def plot_frame(self, frame):
-        self.ax.clear()  # Clear existing points and lines
-        self.ax.set_title(f"Frame: {frame + 1}/{self.transition_data.shape[-1]}")  # Update title with current frame
+            self.ax.clear()  # Clear existing points and lines
+            self.ax.set_title(f"Frame: {frame + 1}/{self.transition_data.shape[-1]}")  # Update title with current frame
 
-        keypoints = self.transition_data[:, :, frame]
+            keypoints = self.transition_data[:, :, frame]
 
-        for x, y, z in keypoints.T:
-            self.ax.scatter(x, y, z, c='r', marker='o')
+            # Plot each keypoint and label it
+            for idx, (x, y, z) in enumerate(keypoints.T):
+                self.ax.scatter(x, y, z, c='r', marker='o')
+                self.ax.text(x, y, z, f'{HAND_BONES[idx]}', color='blue')  # Label keypoints
 
-        for start_bone, end_bone in HAND_BONES_CONNECTIONS:
-            start_idx = HAND_BONES.index(start_bone)
-            end_idx = HAND_BONES.index(end_bone)
-            self.ax.plot([keypoints[0, start_idx], keypoints[0, end_idx]],
-                         [keypoints[1, start_idx], keypoints[1, end_idx]],
-                         [keypoints[2, start_idx], keypoints[2, end_idx]], 'r')
+            # Draw lines between connected keypoints
+            for start_bone, end_bone in HAND_BONES_CONNECTIONS:
+                start_idx = HAND_BONES.index(start_bone)
+                end_idx = HAND_BONES.index(end_bone)
+                self.ax.plot([keypoints[0, start_idx], keypoints[0, end_idx]],
+                            [keypoints[1, start_idx], keypoints[1, end_idx]],
+                            [keypoints[2, start_idx], keypoints[2, end_idx]], 'r')
 
-        plt.draw()
+            plt.draw()
+
 
     def on_key(self, event):
         if event.key == 'right':
@@ -109,6 +113,7 @@ class HandTransitionVisualizer:
 if __name__ == '__main__':
     path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_reverse_inc.npz'
     data = np.load(path)['data']
+
     visualizer = HandTransitionVisualizer(data, 'A', 'TS')
     visualizer.find_missing_transitions()
     visualizer.fill_missing_with_reverse()

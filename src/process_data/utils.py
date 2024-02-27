@@ -131,6 +131,34 @@ ordered_sequence = {
     "8024": "YA"
 }
 
+
+joint_to_param_map_1 = {
+    # Thumb
+    'RightFinger1Metacarpal-RightFinger1Proximal-RightFinger1Distal': "Thumb 01 R Ctrl",
+    # Assuming there's a Thumb 02 and Thumb 03 if applicable
+    'RightFinger1Proximal-RightFinger1Distal-RightFinger1Tip': "Thumb 03 R Ctrl",  # If you have a tip joint
+    
+    # Index finger
+    'RightFinger2Metacarpal-RightFinger2Proximal-RightFinger2Medial': "Index 01 R Ctrl",
+    'RightFinger2Proximal-RightFinger2Medial-RightFinger2Distal': "Index 02 R Ctrl",
+    # Assuming there's an Index 03 if applicable, you would map it here
+    
+    # Middle finger
+    'RightFinger3Metacarpal-RightFinger3Proximal-RightFinger3Medial': "Middle 01 R Ctrl",
+    'RightFinger3Proximal-RightFinger3Medial-RightFinger3Distal': "Middle 02 R Ctrl",
+    # Assuming there's a Middle 03 R Ctrl, it would be added here
+    
+    # Ring finger
+    'RightFinger4Metacarpal-RightFinger4Proximal-RightFinger4Medial': "Ring 01 R Ctrl",
+    'RightFinger4Proximal-RightFinger4Medial-RightFinger4Distal': "Ring 02 R Ctrl",
+    # Assuming there's a Ring 03 R Ctrl, it would be added here
+    
+    # Pinky finger
+    'RightFinger5Metacarpal-RightFinger5Proximal-RightFinger5Medial': "Pinky 01 R Ctrl",
+    'RightFinger5Proximal-RightFinger5Medial-RightFinger5Distal': "Pinky 02 R Ctrl",
+    # Assuming there's a Pinky 03 R Ctrl, it would be added here
+}
+
 sequence_by_frame = {k:v for v,k in ordered_sequence.items()}
 
 DATA_MIN = -90.38202667236328

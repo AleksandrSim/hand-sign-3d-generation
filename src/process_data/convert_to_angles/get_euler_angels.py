@@ -31,19 +31,24 @@ class JointDataConverter:
         yaw = np.arctan2(bone_vector_norm[:, :, 1, :], bone_vector_norm[:, :, 0, :])
         
         # Pitch is the angle between the bone_vector and its projection on the XY plane
-        pitch = np.arctan2(bone_vector_norm[:, :, 2, :], np.sqrt(bone_vector_norm[:, :, 0, :]**2 + bone_vector_norm[:, :, 1, :]**2))
+        pitch = np.arctan2(-bone_vector_norm[2], np.sqrt(bone_vector_norm[0]**2 + bone_vector_norm[1]**2))
+        print(yaw.shape)
+        print(pitch.shape)
+        exit()
         
         cos_angle = bone_plane_normal_norm[:, :, 2, :]  # Directly use the Z component for cos_angle
         roll = np.arccos(np.clip(cos_angle, -1.0, 1.0))
         
         # Combine the angles into a single array
-        euler_angles = np.stack((pitch, roll, yaw), axis=2)
+        euler_angles = np.stack((np.rad2deg(pitch), np.rad2deg(roll), np.rad2deg(yaw)), axis=2)
+        euler_angles_deg = np.nan_to_num(euler_angles_deg)
+
         
         return euler_angles
     
     def convert_to_euler(self):
         # Initialize the euler_angles dictionary for each bone
-        self.euler_angles = {bone: np.zeros((32, 32, 3, 1050)) for bone in HAND_BONES}
+        self.euler_angles = {}
         
         for connection in HAND_BONES_CONNECTIONS:
             parent_name, bone = connection  
@@ -58,12 +63,7 @@ class JointDataConverter:
             idx_parent = HAND_BONES.index(parent_name)
             idx_bone = HAND_BONES.index(bone)
             idx_child = HAND_BONES.index(child_name)
-            print(parent_name)
-            print(bone)
-            print(child_name)
-            print('one joint')
-        
-            
+
             # Extract positions for parent, current, and child bones
             parent_pos = self.joint_data[:, :, :, idx_parent, :]
             joint_pos = self.joint_data[:, :, :, idx_bone, :]
@@ -86,7 +86,8 @@ if __name__ == "__main__":
     name_without_extension = os.path.splitext(base_name)[0]
     save_dir = os.path.dirname(file_path)
     save_path = os.path.join(save_dir, f"{name_without_extension}_euler_angles.npz")
-    print(converter.euler_angles['RightFinger2Distal'].shape)
+    print(converter.euler_angles['RightFinger1Proximal'].shape)
+    print(converter.euler_angles.keys())
 
 
     converter.save_data(save_path)

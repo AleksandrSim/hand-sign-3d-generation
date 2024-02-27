@@ -37,9 +37,9 @@ def send_data(m_queue: multiprocessing.Queue, url: str):
                             "Roll": s[2]
                         },
                         "Thumb 02 R Ctrl": {
-                            "Pitch": 0.0,
-                            "Yaw": 0.0,
-                            "Roll": 0.0
+                            "Pitch": 0,
+                            "Yaw": 0,
+                            "Roll": 0
                         },
                         "Thumb 03 R Ctrl": {
                             "Pitch": s[0],
@@ -58,8 +58,8 @@ def send_data(m_queue: multiprocessing.Queue, url: str):
                         },
                         "Index 02 R Ctrl": {
                             "Pitch": 0.0,
-                            "Yaw": 0.0,
-                            "Roll": 0.0
+                            "Yaw": 0,
+                            "Roll": 0
                         },
                         "Index 03 R Ctrl": {
                             "Pitch": 0.0,
@@ -77,7 +77,7 @@ def send_data(m_queue: multiprocessing.Queue, url: str):
                             "Roll": 0.0
                         },
                         "Middle 02 R Ctrl": {
-                            "Pitch": 0.0,
+                            "Pitch": 000.0,
                             "Yaw": 0.0,
                             "Roll": 0.0
                         },
@@ -92,7 +92,7 @@ def send_data(m_queue: multiprocessing.Queue, url: str):
                             "Roll": 0.0
                         },
                         "Ring 01 R Ctrl": {
-                            "Pitch": 0.0,
+                            "Pitch":0.0,
                             "Yaw": 0.0,
                             "Roll": 0.0
                         },
@@ -104,11 +104,11 @@ def send_data(m_queue: multiprocessing.Queue, url: str):
                         "Ring 03 R Ctrl": {
                             "Pitch": 0.0,
                             "Yaw": 0.0,
-                            "Roll": 0.0
+                            "Roll": .0
                         },
                         "Pinky Metacarpal R Ctrl": {
                             "Pitch": 0.0,
-                            "Yaw": 0.0,
+                            "Yaw": 120.0,
                             "Roll": 0.0
                         },
                         "Pinky 01 R Ctrl": {
