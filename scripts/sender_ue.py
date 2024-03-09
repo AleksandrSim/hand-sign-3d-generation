@@ -45,7 +45,6 @@ def send_data(m_queue: multiprocessing.Queue, url: str):
                 start_t = time.perf_counter()
                 s = m_queue.get(timeout=TIMEOUT)
                 payload = {}
-                print(s)
                 for ctrl in ALL_CTRL:
                     if ctrl in s:
                         angle = s[ctrl]
@@ -104,24 +103,38 @@ CONTROLS = {
 }
 
 NEUTRAL_POSE: dict[str, tuple[float, float, float]] = {
+    'Thumb 01 R Ctrl': (0.0, 0.0, -20.0),
     'Index 01 R Ctrl': (0.0, 0.0, -14.0),
     'Index 02 R Ctrl': (0.0, 0.0, -7.0),
     'Index 03 R Ctrl': (0.0, 0.0, -3.5),
     'Middle 01 R Ctrl': (0.0, 0.0, -12.0),
     'Middle 02 R Ctrl': (0.0, 0.0, -16.0),
-    'Middle 03 R Ctrl': (0.0, 0.0, -5.0)
+    'Middle 03 R Ctrl': (0.0, 0.0, -5.0),
+    'Ring 01 R Ctrl': (0.0, 0.0, -14.0),
+    'Ring 02 R Ctrl': (0.0, 0.0, -24.0),
+    'Ring 03 R Ctrl': (0.0, 0.0, -14.0),
+    'Pinky 01 R Ctrl': (0.0, -8.0, -12.0),
+    'Pinky 02 R Ctrl': (0.0, 0.0, -20.0),
+    'Pinky 03 R Ctrl': (0.0, 0.0, -8.0),
 }
 
 
-def get_angles_by3points(xyz: np.ndarray, keypoints: tuple[str, str, str]):
-    p0 = xyz[:, HAND_BONES.index(keypoints[0])]
-    p1 = xyz[:, HAND_BONES.index(keypoints[1])]
-    p2 = xyz[:, HAND_BONES.index(keypoints[2])]
+def get_angle_by_3_points(p0: np.ndarray, p1: np.ndarray,
+                          p2: np.ndarray) -> float:
     p0p1 = p0-p1
     p2p1 = p2-p1
     cosine_angle = np.dot(p0p1, p2p1) / \
         (np.linalg.norm(p0p1) * np.linalg.norm(p2p1))
-    z = np.degrees(np.arccos(cosine_angle)) - 180.0
+    ang = np.degrees(np.arccos(cosine_angle)) - 180.0
+    return float(ang)
+
+
+def get_3d_angle(xyz: np.ndarray, keypoints: tuple[str, str, str])\
+        -> tuple[float, float, float]:
+    p0 = xyz[:, HAND_BONES.index(keypoints[0])]
+    p1 = xyz[:, HAND_BONES.index(keypoints[1])]
+    p2 = xyz[:, HAND_BONES.index(keypoints[2])]
+    z = get_angle_by_3_points(p0, p1, p2)
     y = 0.0
     return 0.0, y, z
 
@@ -139,7 +152,7 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
         for ctrl, joints in CONTROLS.items():
             print(len(joints))
             if len(joints) == 3:
-                contol_rig[ctrl] = get_angles_by3points(seq[:, :, i], joints)
+                contol_rig[ctrl] = get_3d_angle(seq[:, :, i], joints)
             # The last joint approximation
             elif len(joints) == 1:
                 if joints[0] in contol_rig:
@@ -169,7 +182,7 @@ if __name__ == "__main__":
     # Create a multiprocessing queue for communication between processes
     data_m_queue = multiprocessing.Queue()
 
-    txt = ['A', 'B', 'V', 'A']
+    txt = ['A', 'B', 'A', 'B', 'A', 'B']
     data_queue = get_queued_data(txt)
 
     # Create and start the processes
