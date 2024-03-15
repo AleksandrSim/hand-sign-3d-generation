@@ -34,7 +34,8 @@ ALL_CTRL = ["Thumb 01 R Ctrl", "Thumb 02 R Ctrl", "Thumb 03 R Ctrl",
             "Index Metacarpal R Ctrl", "Index 01 R Ctrl", "Index 02 R Ctrl", "Index 03 R Ctrl",
             "Middle Metacarpal R Ctrl", "Middle 01 R Ctrl", "Middle 02 R Ctrl", "Middle 03 R Ctrl",
             "Ring Metacarpal R Ctrl", "Ring 01 R Ctrl", "Ring 02 R Ctrl", "Ring 03 R Ctrl",
-            "Pinky Metacarpal R Ctrl", "Pinky 01 R Ctrl", "Pinky 02 R Ctrl", "Pinky 03 R Ctrl"
+            "Pinky Metacarpal R Ctrl", "Pinky 01 R Ctrl", "Pinky 02 R Ctrl", "Pinky 03 R Ctrl",
+            "Wrist R Ctrl", "Lowerarm R Ctrl", "Upperarm R Ctrl"
             ]
 
 
@@ -54,6 +55,7 @@ def send_data(m_queue: multiprocessing.Queue, url: str):
                     else:
                         payload[ctrl] = {"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0}
 
+                print(payload)
                 requests.put(url, json={
                     "Parameters": payload,
                     "generateTransaction": True
@@ -119,8 +121,17 @@ NEUTRAL_POSE: dict[str, tuple[float, float, float]] = {
 }
 
 
+# Neutal pose for the arm itself (wrist, elbow, shoulder)
+NEUTRAL_ARM: dict[str, tuple[float, float, float]] = {
+    'Wrist R Ctrl': (17.0, 20.0, -30.0),
+    'Lowerarm R Ctrl': (0.0, 0.0, 65.0),
+    'Upperarm R Ctrl': (30.0, 0.0, 0.0)
+}
+
+
 def get_angle_by_3_points(p0: np.ndarray, p1: np.ndarray,
                           p2: np.ndarray) -> float:
+
     p0p1 = p0-p1
     p2p1 = p2-p1
     cosine_angle = np.dot(p0p1, p2p1) / \
@@ -150,7 +161,6 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
     for i in range(seq.shape[-1]):
         contol_rig = {}
         for ctrl, joints in CONTROLS.items():
-            print(len(joints))
             if len(joints) == 3:
                 contol_rig[ctrl] = get_3d_angle(seq[:, :, i], joints)
             # The last joint approximation
@@ -169,6 +179,9 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
             if ctrl == 'Thumb 01 R Ctrl':
                 rig = contol_rig[ctrl]
                 contol_rig[ctrl] = (0.0, 0.0, (rig[2]+180)/2.0 - 27.0)
+        # Add the neutral arm pose
+        for ctrl, joints in NEUTRAL_ARM.items():
+            contol_rig[ctrl] = joints
         data_queue.put(contol_rig)
 
     return data_queue
@@ -177,7 +190,7 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
 if __name__ == "__main__":
     # Define the URL where characters will be sent
     # endpoint_url = "http://127.0.0.1:8000"
-    endpoint_url = "http://localhost:30010/remote/preset/RCP_Hands/function/Set%20Hand%20Pose"
+    endpoint_url = "http://localhost:30010/remote/preset/RCP_Hand/function/Set%20Hand%20Pose"
 
     # Create a multiprocessing queue for communication between processes
     data_m_queue = multiprocessing.Queue()
