@@ -13,7 +13,7 @@ FRAME_TIME = 1.0 / FPS
 TIMEOUT = 0.1
 
 
-DATA_PATH = 'data/sequence/unified_data_reverse_inc.npz'
+DATA_PATH = 'data/sequence/unified_data_master.npz'
 data = np.load(DATA_PATH)['data']
 
 
@@ -55,7 +55,7 @@ def send_data(m_queue: multiprocessing.Queue, url: str):
                     else:
                         payload[ctrl] = {"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0}
 
-                print(payload)
+                # print(payload)
                 requests.put(url, json={
                     "Parameters": payload,
                     "generateTransaction": True
@@ -87,7 +87,7 @@ def listen_input(m_queue: multiprocessing.Queue):
 
 # Define how to canculate angles for each control
 CONTROLS = {
-    'Thumb 01 R Ctrl': ('RightFinger2Proximal', 'RightFinger1Metacarpal', 'RightFinger1Proximal'),
+    'Thumb 01 R Ctrl': ('RightFinger1Proximal', 'RightFinger1Metacarpal', 'RightFinger2Proximal'),
     'Thumb 02 R Ctrl': ('RightFinger1Metacarpal', 'RightFinger1Proximal', 'RightFinger1Distal'),
     'Thumb 03 R Ctrl': ('Thumb 02 R Ctrl', ),
     'Index 01 R Ctrl': ('RightFinger2Metacarpal', 'RightFinger2Proximal', 'RightFinger2Medial'),
@@ -105,9 +105,9 @@ CONTROLS = {
 }
 
 NEUTRAL_POSE: dict[str, tuple[float, float, float]] = {
-    'Thumb 01 R Ctrl': (0.0, 0.0, -20.0),
+    'Thumb 01 R Ctrl': (0.0, 25, -10.0),
     'Index 01 R Ctrl': (0.0, 0.0, -14.0),
-    'Index 02 R Ctrl': (0.0, 0.0, -7.0),
+    'Index 02 R Ctrl': (0.0, 0.0, -14.0),
     'Index 03 R Ctrl': (0.0, 0.0, -3.5),
     'Middle 01 R Ctrl': (0.0, 0.0, -12.0),
     'Middle 02 R Ctrl': (0.0, 0.0, -16.0),
@@ -123,7 +123,7 @@ NEUTRAL_POSE: dict[str, tuple[float, float, float]] = {
 
 # Neutal pose for the arm itself (wrist, elbow, shoulder)
 NEUTRAL_ARM: dict[str, tuple[float, float, float]] = {
-    'Wrist R Ctrl': (17.0, 20.0, -30.0),
+    'Wrist R Ctrl': (0.0, 0.0, 0.0),
     'Lowerarm R Ctrl': (0.0, 0.0, 65.0),
     'Upperarm R Ctrl': (30.0, 0.0, 0.0)
 }
@@ -160,9 +160,10 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
     seq = np.concatenate(seqs, axis=-1)
     for i in range(seq.shape[-1]):
         contol_rig = {}
+        xyz = seq[:, :, i]
         for ctrl, joints in CONTROLS.items():
             if len(joints) == 3:
-                contol_rig[ctrl] = get_3d_angle(seq[:, :, i], joints)
+                contol_rig[ctrl] = get_3d_angle(xyz, joints)
             # The last joint approximation
             elif len(joints) == 1:
                 if joints[0] in contol_rig:
@@ -178,13 +179,42 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
             # TODO Add 2 lines angle with intersection
             if ctrl == 'Thumb 01 R Ctrl':
                 rig = contol_rig[ctrl]
-                contol_rig[ctrl] = (0.0, 0.0, (rig[2]+180)/2.0 - 27.0)
+                print(rig)
+                contol_rig[ctrl] = (0.0, 0.0,  rig[2]+180/2.0)
         # Add the neutral arm pose
         for ctrl, joints in NEUTRAL_ARM.items():
             contol_rig[ctrl] = joints
-        data_queue.put(contol_rig)
+            try:
+                if ctrl == 'Wrist R Ctrl':
+                    angle = get_hand_orientation(xyz)
+                    contol_rig[ctrl] = (
+                        joints[0], joints[1]+angle[2],
+                        joints[2])
+            except:
+                pass
 
+        data_queue.put(contol_rig)
+        get_hand_orientation(xyz)
+        # break
     return data_queue
+
+
+def get_hand_orientation(xyz: np.ndarray) -> np.ndarray:
+    joints_idx = [HAND_BONES.index(p) for p in
+                  ['RightFinger2Proximal', 'RightFinger3Metacarpal',
+                   'RightFinger4Proximal']]
+    xyz_hand = np.take(xyz, joints_idx, axis=1).T
+    xyz_hand -= xyz_hand[1, :]
+    plane = np.cross(xyz_hand[0], xyz_hand[2])
+    normals = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    angle = get_plane_angle(plane, normals)
+    print(f'Angle: {angle}')
+    return angle
+
+
+def get_plane_angle(plane: np.ndarray, normal: np.ndarray) -> np.ndarray:
+    angle = np.degrees(np.arccos(np.dot(plane, normal)/np.linalg.norm(plane)))
+    return angle
 
 
 if __name__ == "__main__":
@@ -195,7 +225,7 @@ if __name__ == "__main__":
     # Create a multiprocessing queue for communication between processes
     data_m_queue = multiprocessing.Queue()
 
-    txt = ['A', 'B', 'A', 'B', 'A', 'B']
+    txt = ['A', 'B', 'A', 'B']
     data_queue = get_queued_data(txt)
 
     # Create and start the processes
