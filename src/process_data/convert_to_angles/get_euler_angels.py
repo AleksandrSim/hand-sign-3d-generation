@@ -32,10 +32,6 @@ class JointDataConverter:
         
         # Pitch is the angle between the bone_vector and its projection on the XY plane
         pitch = np.arctan2(-bone_vector_norm[2], np.sqrt(bone_vector_norm[0]**2 + bone_vector_norm[1]**2))
-        print(yaw.shape)
-        print(pitch.shape)
-        exit()
-        
         cos_angle = bone_plane_normal_norm[:, :, 2, :]  # Directly use the Z component for cos_angle
         roll = np.arccos(np.clip(cos_angle, -1.0, 1.0))
         

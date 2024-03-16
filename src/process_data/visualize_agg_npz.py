@@ -3,18 +3,11 @@ import numpy
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from aggregated_npz import char_index_map
+from src.process_data.utils import char_index_map
 
 from utils import HAND_BONES, HAND_BONES_CONNECTIONS
 HAND_BONES_INDEXES = list(range(19))
 
-
-char_index_map = {
-    'A': 0, 'B': 1, 'CH': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'HARD': 8, 'I': 9,
-    'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'R': 16, 'S': 17, 'SH': 18,
-    'SHCH': 19, 'SOFT': 20, 'T': 21, 'TS': 22, 'U': 23, 'V': 24, 'Y': 25, 'YA': 26,
-    'YI': 27, 'YO': 28, 'YU': 29, 'Z': 30, 'ZH': 31
-}
 
 
 class HandTransitionVisualizer:
@@ -103,18 +96,16 @@ class HandTransitionVisualizer:
         return filled
 
 
-
-
     def save_to_npz(self, output_path):
         """Save the updated data array to an NPZ file."""
         np.savez_compressed(output_path, data=self.data)
         print(f"Data saved to {output_path}")
 
 if __name__ == '__main__':
-    path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_reverse_inc.npz'
+    path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_master.npz'
     data = np.load(path)['data']
 
-    visualizer = HandTransitionVisualizer(data, 'A', 'TS')
+    visualizer = HandTransitionVisualizer(data, 'YA', 'A')
     visualizer.find_missing_transitions()
     visualizer.fill_missing_with_reverse()
 #    visualizer.save_to_npz('/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_reverse_inc.npz')

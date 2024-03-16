@@ -42,9 +42,54 @@ HAND_BONES = [
                   'RightFinger3Proximal', 'RightFinger3Medial', 'RightFinger3Distal', 'RightFinger2Metacarpal', 
                   'RightFinger2Proximal', 'RightFinger2Medial', 'RightFinger2Distal']
 
-
-
 cyrillic_to_latin_mapping = {
+    "А": "A",  
+    "Б": "B",
+    "В": "V",
+    "Г": "G",
+    "Д": "D",
+    "Е": "E",
+    "Ё": "YO",
+    "Ж": "ZH",
+    "З": "Z",
+    "И": "I",
+    "Й": "Y",
+    "К": "K",
+    "Л": "L",
+    "М": "M",
+    "Н": "N",
+    "О": "O",
+    "П": "P",
+    "Р": "R",
+    "С": "S",
+    "Т": "T",
+    "У": "U",
+    "Ф": "F",
+    "Х": "H",
+    "Ц": "TS",
+    "Ч": "CH",
+    "Ш": "SH",
+    "Щ": "SHCH",
+    "Ъ": "HARD",  # No direct equivalent
+    "Ы": "YI",
+    "Ь": "SOFT",  # No direct equivalent
+    "Э": "EE",
+    "Ю": "YU",
+    "Я": "YA",
+    "prob": "prob"
+    # The following Cyrillic letters do not have direct Latin equivalents:
+    #  Ъ, Ь
+}
+char_index_map = {
+    'A': 0, 'B': 1, 'CH': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'HARD': 8, 'I': 9,
+    'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'R': 16, 'S': 17, 'SH': 18,
+    'SHCH': 19, 'SOFT': 20, 'T': 21, 'TS': 22, 'U': 23, 'V': 24, 'Y': 25, 'YA': 26,
+    'YI': 27, 'YO': 28, 'YU': 29, 'Z': 30, 'ZH': 31, 'EE':32, 'prob': 33
+}
+
+
+
+cyrillic_to_latin_mapping_old = {
     "А": "A",  
     "Б": "B",
     "В": "V",
@@ -134,7 +179,7 @@ ordered_sequence = {
 
 joint_to_param_map_1 = {
     # Thumb
-    'RightFinger1Metacarpal-RightFinger1Proximal-RightFinger1Distal': "Thumb 01 R Ctrl",
+    'RightFinger1Metacarpal-RightFinger1Proximal-RightFinger1Distal': "Thumb 02 R Ctrl",
     # Assuming there's a Thumb 02 and Thumb 03 if applicable
     'RightFinger1Proximal-RightFinger1Distal-RightFinger1Tip': "Thumb 03 R Ctrl",  # If you have a tip joint
     
@@ -1272,3 +1317,44 @@ transitions = ['АБ',
  'ЭЮ',
  'ЭЯ',
  'ЮЯ']
+
+
+cyrillic_to_latin_mapping_ddf = {
+    "А": "A",  
+    "Б": "B",
+    "В": "V",
+    "Г": "G",
+    "Д": "D",
+    "Е": "E",
+    "Ё": "YO",
+    "Ж": "ZH",
+    "З": "Z",
+    "И": "I",
+    "Й": "Y",
+    "К": "K",
+    "Л": "L",
+    "М": "M",
+    "Н": "N",
+    "О": "O",
+    "П": "P",
+    "Р": "R",
+    "С": "S",
+    "Т": "T",
+    "У": "U",
+    "Ф": "F",
+    "Х": "H",
+    "Ц": "TS",
+    "Ч": "CH",
+    "Ш": "SH",
+    "Щ": "SHCH",
+    "Ъ": "HARD",  # No direct equivalent
+    "Ы": "YI",
+    "Ь": "SOFT",  # No direct equivalent
+    "Э": "EE",
+    "Ю": "YU",
+    "Я": "YA",
+    "space": "_"
+    # The following Cyrillic letters do not have direct Latin equivalents:
+    #  Ъ, Ь
+}
+
