@@ -6,7 +6,7 @@ import numpy as np
 import requests
 
 from scripts.retrive_data import HAND_BONES, filter_non_zero
-from src.process_data.utils import letter_to_index
+from src.process_data.utils import char_index_map, letter_to_index
 
 FPS = 30
 FRAME_TIME = 1.0 / FPS
@@ -153,7 +153,7 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
     seqs = []
     for i in range(len(txt)-1):
         seqs.append(filter_non_zero(
-            data[letter_to_index[txt[i]], letter_to_index[txt[i+1]], :, :, :]))
+            data[char_index_map[txt[i]], char_index_map[txt[i+1]], :, :, :]))
     seq = np.concatenate(seqs, axis=-1)
     for i in range(seq.shape[-1]):
         contol_rig = {}
@@ -229,7 +229,7 @@ if __name__ == "__main__":
     # Create a multiprocessing queue for communication between processes
     data_m_queue = multiprocessing.Queue()
 
-    txt = ['A', 'B', 'A', 'B']
+    txt = ['prob', 'A', 'L', 'E', 'K', 'S']
     data_queue = get_queued_data(txt)
 
     # Create and start the processes
