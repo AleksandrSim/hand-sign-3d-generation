@@ -155,7 +155,7 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
         seqs.append(filter_non_zero(
             data[char_index_map[txt[i]], char_index_map[txt[i+1]], :, :, :]))
     seq = np.concatenate(seqs, axis=-1)
-    for i in range(seq.shape[-1]):
+    for i in range(0, seq.shape[-1], 2):
         contol_rig = {}
         xyz = seq[:, :, i]
         angle, plane = get_hand_orientation(xyz)
@@ -169,11 +169,10 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
                     contol_rig[ctrl] = (ref[0]/2.0, ref[1]/2.0, ref[2]/2.0)
             if ctrl == 'Thumb 01 R Ctrl':
                 rot = get_thumb_rotation(xyz, plane)
-                # print(f'{ctrl} {rig[2]+180}, {rot}')
                 contol_rig[ctrl] = (0.0, -rot/2,  0)
 
         # Add the wrist pose
-        contol_rig['Wrist R Ctrl'] = (0.0, angle[2], 0.0)
+        contol_rig['Wrist R Ctrl'] = (angle[0], angle[1], angle[2])
 
         # Take into account the neutral pose
         for ctrl, neutral in NEUTRAL_POSE.items():
@@ -209,15 +208,22 @@ def get_hand_orientation(xyz: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     xyz_hand = np.take(xyz, joints_idx, axis=1).T
     xyz_hand -= xyz_hand[1, :]
     plane = np.cross(xyz_hand[0], xyz_hand[2])
-    normals = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    angle = get_plane_angle(plane, normals)
-    # print(f'Angle: {angle}')
-    return angle, plane
+    plane_yz = np.array([0.0, plane[1], plane[2]])
+    plane_xz = np.array([plane[0], 0.0, plane[2]])
+    plane_xy = np.array([plane[0], plane[1], 0.0])
+    angles = np.array((get_vector_ang(plane_xy, np.array([0, 1, 0])),  # yaw
+                       get_vector_ang(plane_yz, np.array([0, 0, 1])),  # pitch
+                       get_vector_ang(plane_xz, np.array([0, 0, 1]))))  # roll
+    angles[angles > 90] = (180 - angles)[angles > 90]
+    print(f'Angles: {angles}')
+
+    return angles, plane
 
 
-def get_plane_angle(plane: np.ndarray, normal: np.ndarray) -> np.ndarray:
+def get_vector_ang(vector: np.ndarray, normal: np.ndarray) -> np.ndarray:
     # Normals have unit length
-    angle = np.degrees(np.arccos(np.dot(plane, normal)/np.linalg.norm(plane)))
+    angle = np.degrees(
+        np.arccos(np.dot(vector, normal)/np.linalg.norm(vector)))
     return angle
 
 
@@ -230,6 +236,7 @@ if __name__ == "__main__":
     data_m_queue = multiprocessing.Queue()
 
     txt = ['prob', 'A', 'L', 'E', 'K', 'S']
+    # txt = ['prob', 'N', 'I', 'K', 'O', 'L', 'A', 'Y']
     data_queue = get_queued_data(txt)
 
     # Create and start the processes
