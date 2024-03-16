@@ -105,7 +105,7 @@ CONTROLS = {
 }
 
 NEUTRAL_POSE: dict[str, tuple[float, float, float]] = {
-    'Thumb 01 R Ctrl': (0.0, 25, -10.0),
+    'Thumb 01 R Ctrl': (0.0, -25.0, 10.0),
     'Index 01 R Ctrl': (0.0, 0.0, -14.0),
     'Index 02 R Ctrl': (0.0, 0.0, -14.0),
     'Index 03 R Ctrl': (0.0, 0.0, -3.5),
@@ -161,6 +161,7 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
     for i in range(seq.shape[-1]):
         contol_rig = {}
         xyz = seq[:, :, i]
+        angle, plane = get_hand_orientation(xyz)
         for ctrl, joints in CONTROLS.items():
             if len(joints) == 3:
                 contol_rig[ctrl] = get_3d_angle(xyz, joints)
@@ -169,6 +170,11 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
                 if joints[0] in contol_rig:
                     ref = contol_rig[joints[0]]
                     contol_rig[ctrl] = (ref[0]/2.0, ref[1]/2.0, ref[2]/2.0)
+            if ctrl == 'Thumb 01 R Ctrl':
+                rig = contol_rig[ctrl]
+                rot = get_thumb_rotation(xyz, plane)
+                # print(f'{ctrl} {rig[2]+180}, {rot}')
+                contol_rig[ctrl] = (0.0, -rot/2,  0)
             # Take into account the neutral pose
             if ctrl in contol_rig and ctrl in NEUTRAL_POSE:
                 neutral = NEUTRAL_POSE[ctrl]
@@ -176,30 +182,39 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
                 contol_rig[ctrl] = tuple(rig_i - neutral_i
                                          for rig_i, neutral_i
                                          in zip(rig, neutral))
-            # TODO Add 2 lines angle with intersection
-            if ctrl == 'Thumb 01 R Ctrl':
-                rig = contol_rig[ctrl]
-                print(rig)
-                contol_rig[ctrl] = (0.0, 0.0,  rig[2]+180/2.0)
+
         # Add the neutral arm pose
         for ctrl, joints in NEUTRAL_ARM.items():
             contol_rig[ctrl] = joints
             try:
                 if ctrl == 'Wrist R Ctrl':
-                    angle = get_hand_orientation(xyz)
                     contol_rig[ctrl] = (
                         joints[0], joints[1]+angle[2],
                         joints[2])
             except:
                 pass
-
+        # print('Thumb 01 R Ctrl', contol_rig['Thumb 01 R Ctrl'])
         data_queue.put(contol_rig)
         get_hand_orientation(xyz)
         # break
     return data_queue
 
 
-def get_hand_orientation(xyz: np.ndarray) -> np.ndarray:
+def get_thumb_rotation(xyz: np.ndarray, plane: np.ndarray) -> float:
+    joints_idx = [HAND_BONES.index(p) for p in
+                  ['RightFinger1Proximal', 'RightFinger1Metacarpal',
+                   'RightFinger2Proximal', 'RightFinger2Metacarpal']]
+    points = np.take(xyz, joints_idx, axis=1)  # (3, 4)
+    print(points.shape)
+    print(points)
+    svd = np.linalg.svd(points - np.mean(points, axis=1, keepdims=True))
+    normal = svd[0][:, -1]
+    angle = np.degrees(np.arccos(
+        np.dot(plane, normal)/(np.linalg.norm(plane)*np.linalg.norm(normal))))
+    return float(angle)
+
+
+def get_hand_orientation(xyz: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     joints_idx = [HAND_BONES.index(p) for p in
                   ['RightFinger2Proximal', 'RightFinger3Metacarpal',
                    'RightFinger4Proximal']]
@@ -208,11 +223,12 @@ def get_hand_orientation(xyz: np.ndarray) -> np.ndarray:
     plane = np.cross(xyz_hand[0], xyz_hand[2])
     normals = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
     angle = get_plane_angle(plane, normals)
-    print(f'Angle: {angle}')
-    return angle
+    # print(f'Angle: {angle}')
+    return angle, plane
 
 
 def get_plane_angle(plane: np.ndarray, normal: np.ndarray) -> np.ndarray:
+    # Normals have unit length
     angle = np.degrees(np.arccos(np.dot(plane, normal)/np.linalg.norm(plane)))
     return angle
 
