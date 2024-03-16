@@ -104,6 +104,8 @@ CONTROLS = {
     'Pinky 03 R Ctrl': ('Pinky 02 R Ctrl', ),
 }
 
+
+# Neutral pose for the hand and the arm
 NEUTRAL_POSE: dict[str, tuple[float, float, float]] = {
     'Thumb 01 R Ctrl': (0.0, -25.0, 10.0),
     'Index 01 R Ctrl': (0.0, 0.0, -14.0),
@@ -118,11 +120,6 @@ NEUTRAL_POSE: dict[str, tuple[float, float, float]] = {
     'Pinky 01 R Ctrl': (0.0, -8.0, -12.0),
     'Pinky 02 R Ctrl': (0.0, 0.0, -20.0),
     'Pinky 03 R Ctrl': (0.0, 0.0, -8.0),
-}
-
-
-# Neutal pose for the arm itself (wrist, elbow, shoulder)
-NEUTRAL_ARM: dict[str, tuple[float, float, float]] = {
     'Wrist R Ctrl': (0.0, 0.0, 0.0),
     'Lowerarm R Ctrl': (0.0, 0.0, 65.0),
     'Upperarm R Ctrl': (30.0, 0.0, 0.0)
@@ -171,29 +168,22 @@ def get_queued_data(txt: list[str]) -> multiprocessing.Queue:
                     ref = contol_rig[joints[0]]
                     contol_rig[ctrl] = (ref[0]/2.0, ref[1]/2.0, ref[2]/2.0)
             if ctrl == 'Thumb 01 R Ctrl':
-                rig = contol_rig[ctrl]
                 rot = get_thumb_rotation(xyz, plane)
                 # print(f'{ctrl} {rig[2]+180}, {rot}')
                 contol_rig[ctrl] = (0.0, -rot/2,  0)
-            # Take into account the neutral pose
-            if ctrl in contol_rig and ctrl in NEUTRAL_POSE:
-                neutral = NEUTRAL_POSE[ctrl]
-                rig = contol_rig[ctrl]
-                contol_rig[ctrl] = tuple(rig_i - neutral_i
-                                         for rig_i, neutral_i
-                                         in zip(rig, neutral))
 
-        # Add the neutral arm pose
-        for ctrl, joints in NEUTRAL_ARM.items():
-            contol_rig[ctrl] = joints
-            try:
-                if ctrl == 'Wrist R Ctrl':
-                    contol_rig[ctrl] = (
-                        joints[0], joints[1]+angle[2],
-                        joints[2])
-            except:
-                pass
-        # print('Thumb 01 R Ctrl', contol_rig['Thumb 01 R Ctrl'])
+        # Add the wrist pose
+        contol_rig['Wrist R Ctrl'] = (0.0, angle[2], 0.0)
+
+        # Take into account the neutral pose
+        for ctrl, neutral in NEUTRAL_POSE.items():
+            if ctrl in contol_rig:
+                pose = contol_rig[ctrl]
+                contol_rig[ctrl] = tuple(pose_i - neutral_i
+                                         for pose_i, neutral_i
+                                         in zip(pose, neutral))
+            else:
+                contol_rig[ctrl] = neutral
         data_queue.put(contol_rig)
         get_hand_orientation(xyz)
         # break
@@ -205,8 +195,6 @@ def get_thumb_rotation(xyz: np.ndarray, plane: np.ndarray) -> float:
                   ['RightFinger1Proximal', 'RightFinger1Metacarpal',
                    'RightFinger2Proximal', 'RightFinger2Metacarpal']]
     points = np.take(xyz, joints_idx, axis=1)  # (3, 4)
-    print(points.shape)
-    print(points)
     svd = np.linalg.svd(points - np.mean(points, axis=1, keepdims=True))
     normal = svd[0][:, -1]
     angle = np.degrees(np.arccos(
