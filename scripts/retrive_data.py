@@ -56,7 +56,6 @@ class HandTransitionVisualizer:
             xyz_coordinates = ret[:, i, 0]
             print(f"Joint {i+1} xyz:")
             print(xyz_coordinates)
-        exit()
 
         self.transitions_data = self.get_transitions_data()
         if visualize:
