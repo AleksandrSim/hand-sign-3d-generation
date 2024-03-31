@@ -40,12 +40,10 @@ def transform_to_list(input_string: str, special_sequences: list[str])\
                 output_list.extend(transform_word(word))
                 word = ""
             # Avoid multiple whitespaces
-            print(output_list)
             if len(output_list) > 0 and output_list[-1] != 'prob':
                 output_list.append('prob')
 
     if word:
-        print(word, in_angle_brackets)
         if in_angle_brackets and word in special_sequences:
             output_list.append(word)
         else:

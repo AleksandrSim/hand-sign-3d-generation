@@ -62,7 +62,6 @@ def get_finger_angle(xyz: np.ndarray, keypoints: tuple[str, str, str],
         # The last term is to deal with edge cases due to unmerical instability
         r2 = -angle_between_vectors(base_bone, finger_bone_proj)\
             * (90.0 - abs(r3)) / 90.0
-        print(keypoints, r2, r3)
     else:
         r3 = get_angle_by_3_points(p0, p1, p2)
     return 0.0, r2, r3
