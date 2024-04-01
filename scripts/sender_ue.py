@@ -8,6 +8,7 @@ import numpy as np
 import requests
 
 from src.control.config import ALL_CTRL
+from src.control.filters import Filters
 from scripts.retrive_data import filter_non_zero
 from src.control.sequences import PHRASES
 from src.process_data.utils import char_index_map
@@ -21,6 +22,8 @@ TIMEOUT = 0.1
 DATA_PATH = 'data/sequence/unified_data_master.npz'
 data = np.load(DATA_PATH)['data']
 SLEEP_TIME = 0.1  # Sleep time to check if we have a new input
+
+filters = Filters()
 
 
 def send_data(m_queue: multiprocessing.Queue, url: str):
@@ -70,21 +73,27 @@ def get_queued_data(txt: list[str], data_queue: multiprocessing.Queue):
     if len(txt) <= 1:
         warnings.warn(f"{txt} is not a valid sequence. We support > 1 letters")
         return
-    seqs = []
+    seqs: list[tuple[np.ndarray, str]] = []
     for i in range(len(txt)-1):
         if txt[i] in PHRASES:
-            seqs.append(PHRASES[txt[i]])
+            seqs.append((PHRASES[txt[i]], txt[i]))
         elif txt[i] in char_index_map and txt[i+1] in char_index_map:
-            seqs.append(filter_non_zero(
+            seqs.append((filter_non_zero(
                 data[char_index_map[txt[i]],
-                     char_index_map[txt[i+1]], :, :, :]))
+                     char_index_map[txt[i+1]], :, :, :]), txt[i]))
     if txt[-1] in PHRASES:
         # Deal with the case when a keyphrase at the end of the sequence
-        seqs.append(PHRASES[txt[i]])
-    seq = np.concatenate(seqs, axis=-1)
-    for i in range(0, seq.shape[-1], SKIP_FRAMES_RATE):
-        control_rig = get_control_rig(seq[:, :, i])
-        data_queue.put(control_rig)
+        seqs.append((PHRASES[txt[i]], txt[-1]))
+    rigs = []
+    for seq in seqs:
+        rig_seq = [get_control_rig(seq[0][:, :, i])
+                   for i in range(0, seq[0].shape[-1], SKIP_FRAMES_RATE)]
+        rig_seq = filters(rig_seq)
+        rigs.append(rig_seq)
+    filters.reset()  # Reset filters after processing the phrase
+    rigs = [pose for rig in rigs for pose in rig]
+    for rig in rigs:
+        data_queue.put(rig)
 
 
 if __name__ == "__main__":
