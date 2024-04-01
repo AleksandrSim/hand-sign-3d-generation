@@ -10,7 +10,7 @@ The current implementation ignores all punctuation symbols and numbers.
 import warnings
 
 
-def transform_word(word):
+def transform_word(word: str) -> list[str]:
     return list(word.upper())
 
 
