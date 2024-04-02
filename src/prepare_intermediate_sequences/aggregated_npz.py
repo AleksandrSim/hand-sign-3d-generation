@@ -64,8 +64,8 @@ class UnifiedDataBuilder:
 
 
 if __name__ == "__main__":
-    json_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/adjust_all.json"
-    npz_dir = "/Users/aleksandrsimonyan/Desktop/complete_sequence/combined_spaces_letters_npz"
-    output_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_master.npz"
+    json_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/eng/adjust_all_eng.json"
+    npz_dir = "/Users/aleksandrsimonyan/Desktop/complete_sequence/eng/npz"
+    output_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/eng/test.npz"
     builder = UnifiedDataBuilder(json_path, npz_dir, output_path)
     builder.extract_and_compile_data()

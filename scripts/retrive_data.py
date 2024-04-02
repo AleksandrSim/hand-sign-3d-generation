@@ -42,6 +42,10 @@ def filter_non_zero(seq: np.array) -> np.array:
     return seq
 
 
+def linear_interpolate(start, end, num_steps):
+    # This function will create interpolated frames between start and end frames
+    return np.linspace(start, end, num_steps, axis=2)
+
 
 class HandTransitionVisualizer:
     def __init__(self, npz_path, word, visualize=True):
@@ -50,7 +54,6 @@ class HandTransitionVisualizer:
 
         self.data = self.load_data(npz_path)
         ret = filter_non_zero(self.data[0,5])
-        print(ret.shape)
         for i in range(ret.shape[1]):  # Loop through each joint
             # Extract xyz coordinates for current joint
             xyz_coordinates = ret[:, i, 0]
@@ -73,16 +76,32 @@ class HandTransitionVisualizer:
         for i in range(len(self.word) - 1):
             start_char = self.word[i]
             end_char = self.word[i + 1]
+
             if start_char in char_index_map and end_char in char_index_map:
                 start_index = char_index_map[start_char]
                 end_index = char_index_map[end_char]
+                
                 transition_data = self.data[start_index, end_index, :, :, :]
+                non_zero_frames_mask = np.any(transition_data != 0, axis=(0, 1))
+                transition_data = transition_data[:, :, non_zero_frames_mask]
 
-                non_zero_frames_mask = np.any(
-                    transition_data != 0, axis=(0, 1))
-                if non_zero_frames_mask.size > 0:
-                    transitions_data.append(
-                        transition_data[:, :, non_zero_frames_mask])
+                if i < len(self.word) - 2:
+                    next_start_index = end_index
+                    next_end_index = char_index_map[self.word[i + 2]]
+                    next_transition_data = self.data[next_start_index, next_end_index, :, :, :]
+
+                    end_frame = transition_data[:, :, -1:]  # Keeping the 3D structure for the last frame
+                    start_frame = next_transition_data[:, :, :1]  # Keeping the 3D structure for the first frame
+
+                    interpolated_frames = linear_interpolate(end_frame, start_frame, num_steps=30)
+                    
+                    # Ensure interpolated_frames is 3D by squeezing the last dimension
+                    interpolated_frames_squeezed = np.squeeze(interpolated_frames, axis=-1)
+
+                    transition_data = np.concatenate((transition_data[:, :, :-1], interpolated_frames_squeezed), axis=2)
+
+                transitions_data.append(transition_data)
+
         return transitions_data
 
     def plot_frame(self, transition_index, frame_index):
@@ -91,7 +110,6 @@ class HandTransitionVisualizer:
             transition_data = self.transitions_data[transition_index]
 
             frame_data = transition_data[:, :, frame_index]
-            print(frame_data.shape)
             self.ax.set_title(
                 f"Transition {transition_index + 1}/{len(self.transitions_data)}, Frame: {frame_index + 1}/{transition_data.shape[-1]}")
 
@@ -144,6 +162,7 @@ class HandTransitionVisualizer:
 
 
 if __name__ == '__main__':
+
     # Example usage
     npz_path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_reverse_inc.npz'
     word = "ARARAT"

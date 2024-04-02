@@ -5,9 +5,8 @@ import numpy as np
 
 from src.process_data.utils import char_index_map
 
-
 class CombineData:
-    def __init__(self, letter_paths, bad_complication_json, spaces_json ):
+    def __init__(self, letter_paths, bad_complication_json=None, spaces_json=None ):
         self.letter_paths = letter_paths
         self.bad_complication_json = bad_complication_json
         self.spaces_json = spaces_json
@@ -59,17 +58,20 @@ class CombineData:
 
     def save_json(self):
         # Construct the full file path in the parent directory
-        file_path = os.path.join(os.path.dirname(self.letter_paths), 'adjust_all.json')
+        file_path = os.path.join(os.path.dirname(self.letter_paths), 'adjust_all_eng.json')
         # Open the file and write the JSON data
         with open(file_path, 'w') as f:
             json.dump(self.final_dic, f)
     
 
 if __name__ == '__main__':
-    combiner = CombineData('/Users/aleksandrsimonyan/Desktop/complete_sequence/jsons', 
+    combiner = CombineData('/Users/aleksandrsimonyan/Desktop/complete_sequence/eng/jsons', 
                            '/Users/aleksandrsimonyan/Desktop/complete_sequence/bad_complications/Combinations_V1.json', 
                            '/Users/aleksandrsimonyan/Desktop/complete_sequence/letters_spaces/Letters_with_Stops.json')
     combiner.iterate_letters()
+    combiner.save_json()
+    exit()
+
     combiner.add_stop_sequences()
     combiner.add_problematic()
     combiner.save_json()

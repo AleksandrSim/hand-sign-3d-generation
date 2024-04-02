@@ -1,112 +1,33 @@
 import os
-import numpy 
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from src.process_data.utils import char_index_map
 
-from utils import HAND_BONES, HAND_BONES_CONNECTIONS
-HAND_BONES_INDEXES = list(range(19))
+class Normalization:
+    def __init__(self, npz_path):
+        self.data = np.load(npz_path)['data']
+        print("Data shape:", self.data.shape)
 
-
-
-class HandTransitionVisualizer:
-    def __init__(self, data, start_char, end_char):
-        self.data = data
-        self.start_char = start_char
-        self.end_char = end_char
-        self.start_index = char_index_map[start_char]
-        self.end_index = char_index_map[end_char]
-        self.current_frame = 0
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111, projection='3d')
-        plt.gcf().canvas.mpl_connect('key_press_event', self.on_key)
-        self.transition_data  = self.data[self.start_index, self.end_index, :,:,:]
-        print(self.transition_data.shape)
-        non_zero_frames_mask = np.any(self.transition_data != 0, axis=(0, 1))
-        self.transition_data = self.transition_data[:, :,  non_zero_frames_mask]
+    def print_first_frame_first_letter(self, start_letter):
+        for i in range(self.data.shape[1]):
+            first_frame = self.data[start_letter, i, :, :, 0]
+            if not np.all(first_frame == 0):
+                print(f"Coordinates for the sequence {start_letter+1}, letter {i+1} in the first frame:")
+                print(first_frame)
 
 
-    def plot_frame(self, frame):
-            self.ax.clear()  # Clear existing points and lines
-            self.ax.set_title(f"Frame: {frame + 1}/{self.transition_data.shape[-1]}")  # Update title with current frame
+    def print_dynamic_start_last_frame(self, fixed_end_letter):
+        for start_letter in range(self.data.shape[0]):
+            non_zero_frames = np.any(self.data[start_letter, fixed_end_letter, :, :, :], axis=(1, 2))
+            if np.any(non_zero_frames):
+                last_non_zero_frame_index = np.max(np.where(non_zero_frames)[0])
+                last_frame = self.data[start_letter, fixed_end_letter, :, :, last_non_zero_frame_index]
+                print(f"Coordinates for the sequence {start_letter+1}, letter {fixed_end_letter+1} in the last significant frame:")
+                print(last_frame)
+            else:
+                print(f"No significant frames found for sequence {start_letter+1}, letter {fixed_end_letter+1}.")
 
-            keypoints = self.transition_data[:, :, frame]
-
-            # Plot each keypoint and label it
-            for idx, (x, y, z) in enumerate(keypoints.T):
-                self.ax.scatter(x, y, z, c='r', marker='o')
-                self.ax.text(x, y, z, f'{HAND_BONES[idx]}', color='blue')  # Label keypoints
-
-            # Draw lines between connected keypoints
-            for start_bone, end_bone in HAND_BONES_CONNECTIONS:
-                start_idx = HAND_BONES.index(start_bone)
-                end_idx = HAND_BONES.index(end_bone)
-                self.ax.plot([keypoints[0, start_idx], keypoints[0, end_idx]],
-                            [keypoints[1, start_idx], keypoints[1, end_idx]],
-                            [keypoints[2, start_idx], keypoints[2, end_idx]], 'r')
-
-            plt.draw()
-
-
-    def on_key(self, event):
-        if event.key == 'right':
-            self.current_frame = min(self.current_frame + 1, self.transition_data.shape[-1] - 1)
-        elif event.key == 'left':
-            self.current_frame = max(self.current_frame - 1, 0)
-        self.plot_frame(self.current_frame)
-
-    def visualize(self):
-        self.plot_frame(self.current_frame)
-        plt.show()
-
-    def find_missing_transitions(self):
-        missing_transitions = []
-        characs = char_index_map.keys()
-
-        for start_char in characs:
-            for end_char in characs:
-                start_index, end_index = char_index_map[start_char], char_index_map[end_char]
-                transition_data = self.data[start_index, end_index, :, :, :]
-                if not np.any(transition_data):
-                    missing_transitions.append((start_char, end_char))
-
-        print(f"Missing Transitions: {len(missing_transitions)} / {len(char_index_map)**2}")
-        print(missing_transitions)
-        return missing_transitions
-
-    def fill_missing_with_reverse(self):
-        missing_transitions = self.find_missing_transitions()
-        filled = 0
-        filled_list = []
-
-        for start_char, end_char in missing_transitions:
-            start_index, end_index = char_index_map[start_char], char_index_map[end_char]
-            # Check if the reverse transition exists
-            reverse_data = self.data[end_index, start_index, :, :, :]
-
-            if np.any(reverse_data):
-                # Reverse the frames and assign to the missing transition
-                self.data[start_index, end_index, :, :, :] = reverse_data[:, :, ::-1]
-                filled += 1
-                filled_list.append([start_char, end_char])
-        print(filled_list)
-        
-
-        return filled
-
-
-    def save_to_npz(self, output_path):
-        """Save the updated data array to an NPZ file."""
-        np.savez_compressed(output_path, data=self.data)
-        print(f"Data saved to {output_path}")
 
 if __name__ == '__main__':
-    path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_master.npz'
-    data = np.load(path)['data']
-
-    visualizer = HandTransitionVisualizer(data, 'B', 'B')
-    visualizer.find_missing_transitions()
-    visualizer.fill_missing_with_reverse()
-#    visualizer.save_to_npz('/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_reverse_inc.npz')
-    visualizer.visualize()
+    npz_path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/eng_test.npz'
+    norm = Normalization(npz_path)
+    norm.print_first_frame_first_letter(0)  # Assuming you want to start from the first sequence
+    norm.print_dynamic_start_last_frame(0)  # Assuming the fixed end letter is 27th
