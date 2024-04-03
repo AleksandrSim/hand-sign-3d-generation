@@ -47,6 +47,26 @@ def linear_interpolate(start, end, num_steps):
     return np.linspace(start, end, num_steps, axis=2)
 
 
+def interpolate_sequences(data, start_idx, end_idx, next_idx=None):
+    transition_data = data[start_idx, end_idx, :, :, :]
+    non_zero_frames_mask = np.any(transition_data != 0, axis=(0, 1))
+    transition_data = transition_data[:, :, non_zero_frames_mask]    
+
+    if next_idx:
+        next_transition_data = data[end_idx, next_idx, :, :, :]
+
+        start_frame = transition_data[:, :, -1:]  
+        end_frame = next_transition_data[:, :, :1] 
+        interpolated_frames = linear_interpolate(start_frame, end_frame, num_steps=120)
+        
+        interpolated_frames_squeezed = np.squeeze(interpolated_frames, axis=-1)
+        transition_data = np.concatenate((transition_data[:, :, :], interpolated_frames_squeezed), axis=2)
+    return transition_data
+
+
+
+
+
 class HandTransitionVisualizer:
     def __init__(self, npz_path, word, visualize=True):
         self.word = word
@@ -80,25 +100,15 @@ class HandTransitionVisualizer:
             if start_char in char_index_map and end_char in char_index_map:
                 start_index = char_index_map[start_char]
                 end_index = char_index_map[end_char]
-                
-                transition_data = self.data[start_index, end_index, :, :, :]
-                non_zero_frames_mask = np.any(transition_data != 0, axis=(0, 1))
-                transition_data = transition_data[:, :, non_zero_frames_mask]
+
 
                 if i < len(self.word) - 2:
-                    next_start_index = end_index
-                    next_end_index = char_index_map[self.word[i + 2]]
-                    next_transition_data = self.data[next_start_index, next_end_index, :, :, :]
-
-                    end_frame = transition_data[:, :, -1:]  # Keeping the 3D structure for the last frame
-                    start_frame = next_transition_data[:, :, :1]  # Keeping the 3D structure for the first frame
-
-                    interpolated_frames = linear_interpolate(end_frame, start_frame, num_steps=30)
+                    transition_data = interpolate_sequences(
+                                      self.data, start_index, end_index, char_index_map[self.word[i+2]])
                     
-                    # Ensure interpolated_frames is 3D by squeezing the last dimension
-                    interpolated_frames_squeezed = np.squeeze(interpolated_frames, axis=-1)
-
-                    transition_data = np.concatenate((transition_data[:, :, :-1], interpolated_frames_squeezed), axis=2)
+                else:
+                    transition_data = interpolate_sequences(
+                                      self.data, start_index, end_index, None)                    
 
                 transitions_data.append(transition_data)
 
@@ -164,8 +174,8 @@ class HandTransitionVisualizer:
 if __name__ == '__main__':
 
     # Example usage
-    npz_path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_reverse_inc.npz'
-    word = "ARARAT"
+    npz_path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_master.npz'
+    word = "ARMENIA"
     visualize = True  # Set to False to return data, True - for visualization
 
     visualizer = HandTransitionVisualizer(npz_path, word, visualize=visualize)

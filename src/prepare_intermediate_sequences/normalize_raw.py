@@ -16,51 +16,52 @@ class TransitionInterpolator:
     
 
     def process_transitions(self):
-        transitions = []
-        num_chars = self.data.shape[0]  # Assuming there are 27 characters
+        num_chars = self.data.shape[0]  # 34 characters
+        original_frames = self.data.shape[-1]  # 1050 frames
+
+        # If you add 30 frames to each of the 34*34 transitions, the increase would be much larger
+        # But if you're adding 30 frames in total for the dataset, then the final frame count would be 1050 + 30
+        total_frames = original_frames + 30
+
+        # Initialize the array to hold the transitions
+        transitions_data = np.zeros((num_chars, num_chars, 3, 19, total_frames))
 
         for start_char in range(num_chars):
-            for end_char in range(num_chars):  # Include all possible end_chars
+            for end_char in range(num_chars):
                 first_transition = self.data[start_char, end_char, :, :, :]
 
-                # Find the last non-zero frame for the first transition
-                non_zero_frames_first = np.any(first_transition != 0, axis=(0, 1))  # Check across joints and coordinates
-
+                non_zero_frames_first = np.any(first_transition != 0, axis=(0, 1))
                 last_frame_index_first = np.max(np.where(non_zero_frames_first)[0]) if np.any(non_zero_frames_first) else -1
 
                 if last_frame_index_first == -1:
-                    continue  # Skip if no significant frames are found
+                    continue
 
-                end_frame_first_transition = first_transition[:, :,  last_frame_index_first:last_frame_index_first+1]
-
-                for next_char in range(num_chars):
-                    second_transition = self.data[end_char, next_char, :, :, :]
-
-                    # Find the first significant frame in the second transition
+                end_frame_first_transition = first_transition[:, :, last_frame_index_first:last_frame_index_first+1]
+                
+                # Assume the interpolation is done just once between each unique pair of transitions
+                if end_char < num_chars - 1:
+                    second_transition = self.data[start_char, end_char + 1, :, :, :]
                     non_zero_frames_second = np.any(second_transition != 0, axis=(0, 1))
                     first_frame_index_second = np.min(np.where(non_zero_frames_second)[0]) if np.any(non_zero_frames_second) else -1
 
                     if first_frame_index_second == -1:
-                        continue  # Skip if no significant frames are found
+                        continue
 
                     start_frame_second_transition = second_transition[:, :, first_frame_index_second:first_frame_index_second+1]
 
-                    # Interpolate between the last frame of the first transition and the first frame of the second transition
                     interpolated_frames = self.linear_interpolate(end_frame_first_transition, start_frame_second_transition)
-                    interpolated_frames = np.squeeze(interpolated_frames, axis=-1)  # This removes the last dimension if it's 1
+                    interpolated_frames = np.squeeze(interpolated_frames, axis=-1)
                     
-
-
-                    combined_transition = np.concatenate(
-                        [first_transition[:, :, :last_frame_index_first],
+                    # Fill in the transitions_data array
+                    transition_end = min(last_frame_index_first + 1 + 30, total_frames)  # Ensure not to exceed the total frame count
+                    transitions_data[start_char, end_char, :, :, :transition_end] = np.concatenate(
+                        [first_transition[:, :, :last_frame_index_first+1],
                         interpolated_frames],
-                        axis=2)  # Concatenating along the frame dimension
-                    transitions.append(combined_transition)
-                    transition_np =np.array(transitions)
-                    print(transition_np.shape)
+                        axis=2
+                    )
 
+        return transitions_data
 
-        return transition_np
 
     def save_transitions(self, transitions):
         np.savez(self.output_npz_path, data=transitions)
