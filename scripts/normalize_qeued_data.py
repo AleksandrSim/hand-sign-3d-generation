@@ -128,8 +128,11 @@ def get_queued_data_normalized(txt: list[str], data_queue: multiprocessing.Queue
             if i < len(txt)-2:
                 interpolated_data = interpolate_sequences(data, 
                                       char_index_map[txt[i]], char_index_map[txt[i+1]], char_index_map[txt[i+2]])
-            seqs.append(interpolated_data, txt[i]))
-            
+                seqs.append((interpolated_data, txt[i]))
+            else:
+                seqs.append((filter_non_zero(
+                    data[char_index_map[txt[i]],
+                        char_index_map[txt[i+1]], :, :, :]), txt[i]))
 
     if txt[-1] in PHRASES:
         # Deal with the case when a keyphrase at the end of the sequence
@@ -145,18 +148,3 @@ def get_queued_data_normalized(txt: list[str], data_queue: multiprocessing.Queue
     for rig in rigs:
         data_queue.put(rig)
 
-
-
-    if txt[-1] in PHRASES:
-        # Deal with the case when a keyphrase at the end of the sequence
-        seqs.append((PHRASES[txt[i]], txt[-1]))
-    rigs = []
-    for seq in seqs:
-        rig_seq = [get_control_rig(seq[0][:, :, i])
-                   for i in range(0, seq[0].shape[-1], SKIP_FRAMES_RATE)]
-        rig_seq = filters(rig_seq)
-        rigs.append(rig_seq)
-    filters.reset()  # Reset filters after processing the phrase
-    rigs = [pose for rig in rigs for pose in rig]
-    for rig in rigs:
-        data_queue.put(rig)
