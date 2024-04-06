@@ -68,6 +68,7 @@ class ProcessBVH:
         joint_names = []
         armature = bpy.data.objects[self.armature_name]
         for bone in armature.pose.bones:
+            print(bone.name)
             joint_names.append(bone.name)
         return joint_names
 
@@ -111,12 +112,9 @@ class ProcessBVH:
         joint_names = self.get_all_joint_names()
         joint_locations = {}
         for joint_name in joint_names:
-            print(joint_name)
             if joint_name not in HAND_BONES:
                 continue
             location = self.get_bone_location(joint_name, frame_to_visualize)
-            print(location)
-            
             joint_locations[joint_name] = location
 
         if use_plotly:
@@ -164,11 +162,6 @@ class ProcessBVH:
             # Set the view angle only if a new plot is created
             if created_new_plot:
                 self.mpl_ax.view_init(elev=int(self.elevation), azim=int(self.azimuth))
-            self.mpl_ax.set_title(f'3D Axes Plot - Frame {frame_to_visualize}')
-#            if debug or created_new_plot:
-#            plt.imshow(self.mpl_fig)
-            plt.show()
-
             return self.mpl_fig
 
 

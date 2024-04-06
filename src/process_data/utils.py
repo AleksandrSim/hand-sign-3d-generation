@@ -1,15 +1,13 @@
 import numpy as np
 
 
-HAND_BONES_OLD = [
-    'RightFinger1Metacarpal', 'RightFinger1Proximal', 'RightFinger1Distal',# 'RightFinger1Tip', 
-    'RightFinger2Metacarpal', 'RightFinger2Proximal', 'RightFinger2Medial', 'RightFinger2Distal', 'RightFinger2Tip', 
-    'RightFinger3Metacarpal', 'RightFinger3Proximal', 'RightFinger3Medial', 'RightFinger3Distal', 'RightFinger3Tip', 
-    'RightFinger4Metacarpal', 'RightFinger4Proximal', 'RightFinger4Medial', 'RightFinger4Distal', 'RightFinger4Tip', 
-    'RightFinger5Metacarpal', 'RightFinger5Proximal', 'RightFinger5Medial', 'RightFinger5Distal', 'RightFinger5Tip'
-]
-
 HAND_BONES_CONNECTIONS = [
+    ('RightHand', 'RightFinger5Metacarpal'),
+    ('RightHand', 'RightFinger4Metacarpal'),
+    ('RightHand', 'RightFinger3Metacarpal'),
+    ('RightHand', 'RightFinger2Metacarpal'),
+    ('RightHand', 'RightFinger1Metacarpal'),
+
     ('RightFinger1Metacarpal', 'RightFinger1Proximal'),
     ('RightFinger1Proximal', 'RightFinger1Distal'),
 #    ('RightFinger1Distal', 'RightFinger1Tip'),
@@ -35,7 +33,7 @@ HAND_BONES_CONNECTIONS = [
 #    ('RightFinger5Distal', 'RightFinger5Tip')
 ]
 
-HAND_BONES = [
+HAND_BONES = ['RightHand',
               'RightFinger1Metacarpal', 'RightFinger1Proximal', 'RightFinger1Distal', 'RightFinger5Metacarpal',
                 'RightFinger5Proximal', 'RightFinger5Medial', 'RightFinger5Distal', 'RightFinger4Metacarpal',
                   'RightFinger4Proximal', 'RightFinger4Medial', 'RightFinger4Distal', 'RightFinger3Metacarpal', 
