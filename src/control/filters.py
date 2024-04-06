@@ -54,3 +54,24 @@ class Filters(Filter):
         for f in self.filters:
             rig_seq = f(rig_seq)
         return rig_seq
+
+def linear_interpolate(start, end, num_steps):
+    # This function will create interpolated frames between start and end frames
+    return np.linspace(start, end, num_steps, axis=2)
+
+
+def interpolate_sequences(data, start_idx, end_idx, next_idx=None):
+    transition_data = data[start_idx, end_idx, :, :, :]
+    non_zero_frames_mask = np.any(transition_data != 0, axis=(0, 1))
+    transition_data = transition_data[:, :, non_zero_frames_mask]    
+
+    if next_idx:
+        next_transition_data = data[end_idx, next_idx, :, :, :]
+
+        start_frame = transition_data[:, :, -1:]  
+        end_frame = next_transition_data[:, :, :1] 
+        interpolated_frames = linear_interpolate(start_frame, end_frame, num_steps=170)
+        
+        interpolated_frames_squeezed = np.squeeze(interpolated_frames, axis=-1)
+        transition_data = np.concatenate((transition_data[:, :, :], interpolated_frames_squeezed), axis=2)
+    return transition_data
