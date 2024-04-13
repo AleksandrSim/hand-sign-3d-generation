@@ -111,11 +111,9 @@ class ProcessBVH:
         joint_names = self.get_all_joint_names()
         joint_locations = {}
         for joint_name in joint_names:
-            print(joint_name)
             if joint_name not in HAND_BONES:
                 continue
             location = self.get_bone_location(joint_name, frame_to_visualize)
-            print(location)
             
             joint_locations[joint_name] = location
 

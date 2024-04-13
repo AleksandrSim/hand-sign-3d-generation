@@ -6,7 +6,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from src.process_data.utils import char_index_map
 
 from utils import HAND_BONES, HAND_BONES_CONNECTIONS
-HAND_BONES_INDEXES = list(range(19))
+HAND_BONES_INDEXES = list(range(20))
+print(char_index_map)
 
 
 
@@ -102,10 +103,9 @@ class HandTransitionVisualizer:
         print(f"Data saved to {output_path}")
 
 if __name__ == '__main__':
-    path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_master.npz'
+    path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/master_eng.npz'
     data = np.load(path)['data']
-
-    visualizer = HandTransitionVisualizer(data, 'YA', 'A')
+    visualizer = HandTransitionVisualizer(data, 'B', 'C')
     visualizer.find_missing_transitions()
     visualizer.fill_missing_with_reverse()
 #    visualizer.save_to_npz('/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_reverse_inc.npz')

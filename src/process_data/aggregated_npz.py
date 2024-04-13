@@ -3,12 +3,7 @@ import json
 
 import numpy as np
 
-char_index_map = {
-    'A': 0, 'B': 1, 'CH': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'HARD': 8, 'I': 9,
-    'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'R': 16, 'S': 17, 'SH': 18,
-    'SHCH': 19, 'SOFT': 20, 'T': 21, 'TS': 22, 'U': 23, 'V': 24, 'Y': 25, 'YA': 26,
-    'YI': 27, 'YO': 28, 'YU': 29, 'Z': 30, 'ZH': 31, 'EE':32, 'space': 33
-}
+from src.process_data.utils import char_index_map
 
 
 class UnifiedDataBuilder:
@@ -30,7 +25,7 @@ class UnifiedDataBuilder:
     def extract_and_compile_data(self):
         json_data = self.load_json()
         max_transition_length = self.find_max_transition_length(json_data)
-        compiled_data = np.zeros((len(char_index_map), len(char_index_map), 3, 19, max_transition_length))
+        compiled_data = np.zeros((len(char_index_map), len(char_index_map), 3, 20, max_transition_length))
         skipped_transitions = []
 
         for transition, (duration, start_frame, npz_file) in json_data.items():
@@ -59,8 +54,8 @@ class UnifiedDataBuilder:
 
 
 if __name__ == "__main__":
-    json_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/output.json"
-    npz_dir = "/Users/aleksandrsimonyan/Desktop/complete_sequence/all_npz"
-    output_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data.npz"
+    json_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/adjust_all_eng.json"
+    npz_dir = "/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/npz"
+    output_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/unified_data.npz"
     builder = UnifiedDataBuilder(json_path, npz_dir, output_path)
     builder.extract_and_compile_data()

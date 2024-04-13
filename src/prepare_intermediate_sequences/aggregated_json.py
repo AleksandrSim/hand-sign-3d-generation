@@ -15,6 +15,9 @@ class CombineData:
 
     def iterate_letters(self):
         letter_folder = os.listdir(self.letter_paths)
+        letter_folder = [i for i in letter_folder if i.endswith('json')]
+
+        print(letter_folder)
         for letter in letter_folder:
             self.process_letter(letter)
 
@@ -59,19 +62,19 @@ class CombineData:
 
     def save_json(self):
         # Construct the full file path in the parent directory
-        file_path = os.path.join(os.path.dirname(self.letter_paths), 'adjust_all.json')
+        file_path = os.path.join(os.path.dirname(self.letter_paths), 'adjust_all_eng.json')
         # Open the file and write the JSON data
         with open(file_path, 'w') as f:
             json.dump(self.final_dic, f)
     
 
 if __name__ == '__main__':
-    combiner = CombineData('/Users/aleksandrsimonyan/Desktop/complete_sequence/jsons', 
+    combiner = CombineData('/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/json', 
                            '/Users/aleksandrsimonyan/Desktop/complete_sequence/bad_complications/Combinations_V1.json', 
                            '/Users/aleksandrsimonyan/Desktop/complete_sequence/letters_spaces/Letters_with_Stops.json')
     combiner.iterate_letters()
-    combiner.add_stop_sequences()
-    combiner.add_problematic()
+#    combiner.add_stop_sequences()
+#    combiner.add_problematic()
     combiner.save_json()
 
 

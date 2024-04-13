@@ -4,15 +4,8 @@ import matplotlib.pyplot as plt
 from src.process_data.utils import HAND_BONES, HAND_BONES_CONNECTIONS
 from src.process_data.aggregated_npz import char_index_map
 
-HAND_BONES_INDEXES = list(range(19))
+HAND_BONES_INDEXES = list(range(20))
 
-
-char_index_map = {
-    'A': 0, 'B': 1, 'CH': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'HARD': 8, 'I': 9,
-    'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'R': 16, 'S': 17, 'SH': 18,
-    'SHCH': 19, 'SOFT': 20, 'T': 21, 'TS': 22, 'U': 23, 'V': 24, 'Y': 25, 'YA': 26,
-    'YI': 27, 'YO': 28, 'YU': 29, 'Z': 30, 'ZH': 31
-}
 
 # Assuming HAND_BONES, HAND_BONES_CONNECTIONS, and char_index_map are defined as before
 
@@ -34,7 +27,7 @@ def filter_non_zero(seq: np.array) -> np.array:
     This function asserts that the input array matches the expected shape.
     """
 
-    assert seq.shape == (3, 19, 1050), "Input array does not match the expected shape (3, 19, 1050)"
+#    assert seq.shape == (3, 19, 1050), "Input array does not match the expected shape (3, 19, 1050)"
     
     non_zero_mask = np.all(seq == 0, axis=(0,1))
     index = np.argmax(non_zero_mask)
@@ -56,7 +49,6 @@ class HandTransitionVisualizer:
             xyz_coordinates = ret[:, i, 0]
             print(f"Joint {i+1} xyz:")
             print(xyz_coordinates)
-        exit()
 
         self.transitions_data = self.get_transitions_data()
         if visualize:
@@ -146,7 +138,7 @@ class HandTransitionVisualizer:
 
 if __name__ == '__main__':
     # Example usage
-    npz_path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_reverse_inc.npz'
+    npz_path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/master_eng.npz'
     word = "ARARAT"
     visualize = True  # Set to False to return data, True - for visualization
 

@@ -109,9 +109,9 @@ class HandTransitionVisualizer:
         self.root.mainloop()
 
 if __name__ == '__main__':
-    path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_master.npz'
+    path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/unified_data.npz'
     data = np.load(path)['data']
-    start_char = 'B'
-    end_char = 'B'
+    start_char = 'G'
+    end_char = 'V'
     visualizer = HandTransitionVisualizer(data, start_char, end_char)
     visualizer.visualize()

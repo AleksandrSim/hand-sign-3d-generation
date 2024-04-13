@@ -4,6 +4,7 @@ import json
 import numpy as np
 
 from src.process_data.utils import char_index_map
+print(char_index_map)
 
 class UnifiedDataBuilder:
     def __init__(self, json_path, npz_dir, output_path):
@@ -24,10 +25,12 @@ class UnifiedDataBuilder:
     def extract_and_compile_data(self):
         json_data = self.load_json()
         max_transition_length = self.find_max_transition_length(json_data)
-        compiled_data = np.zeros((len(char_index_map), len(char_index_map), 3, 19, max_transition_length))
+        compiled_data = np.zeros((len(char_index_map), len(char_index_map), 3, 20, max_transition_length))
         skipped_transitions = []
 
         for transition, (duration, start_frame, npz_file) in json_data.items():
+
+            print(transition)
             start_letter, end_letter = transition.split('_')
             start_frame = int(start_frame)
             duration = int(duration)
@@ -35,6 +38,7 @@ class UnifiedDataBuilder:
             # Adjust to reflect the correct starting point and duration
             if start_frame + duration - 1 <= npz_data.shape[2]:
                 extracted_keypoints = npz_data[:, :, start_frame-1:start_frame-1+duration]
+                print(extracted_keypoints)
             else:
                 skipped_transitions.append(transition)
                 continue  # Skip this iteration if the range is out of bounds
@@ -47,7 +51,7 @@ class UnifiedDataBuilder:
 
             reverse_transition = end_letter + '_' + start_letter
             if reverse_transition not in json_data:
-#                print(f'Adding reversal of {reverse_transition}')
+                print(reverse_transition)
                 for kp_index in range(extracted_keypoints.shape[0]):
                     for xyz_index in range(3):
                         # Find the actual length of meaningful data to avoid reversing the padding
@@ -64,8 +68,8 @@ class UnifiedDataBuilder:
 
 
 if __name__ == "__main__":
-    json_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/adjust_all.json"
-    npz_dir = "/Users/aleksandrsimonyan/Desktop/complete_sequence/combined_spaces_letters_npz"
-    output_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_master.npz"
+    json_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/adjust_all_eng.json"
+    npz_dir = "/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/npz"
+    output_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/master_eng.npz"
     builder = UnifiedDataBuilder(json_path, npz_dir, output_path)
     builder.extract_and_compile_data()

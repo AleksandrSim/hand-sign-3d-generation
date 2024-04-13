@@ -1,6 +1,9 @@
 import numpy as np
 
 
+import numpy as np
+
+
 HAND_BONES_CONNECTIONS = [
     ('RightHand', 'RightFinger5Metacarpal'),
     ('RightHand', 'RightFinger4Metacarpal'),
@@ -40,6 +43,8 @@ HAND_BONES = ['RightHand',
                   'RightFinger3Proximal', 'RightFinger3Medial', 'RightFinger3Distal', 'RightFinger2Metacarpal', 
                   'RightFinger2Proximal', 'RightFinger2Medial', 'RightFinger2Distal']
 
+
+'''
 cyrillic_to_latin_mapping = {
     "А": "A",  
     "Б": "B",
@@ -132,8 +137,21 @@ letter_to_index = {
     "TS": 22, "CH": 23, "SH": 24, "SHCH": 25, "HARD": 26, 
     "E": 27, "YU": 28, "YA": 29, "SOFT": 30
 }
+'''
 
-num_letters = len(letter_to_index)  # Th
+cyrillic_to_latin_mapping = {
+    'A': 'A', 'B': 'B', 'C': 'C', 'D': 'D', 'E': 'E', 'F': 'F', 'G': 'G', 
+    'H': 'H', 'I': 'I', 'J': 'J', 'K': 'K', 'L': 'L', 'M': 'M', 'N': 'N', 
+    'O': 'O', 'P': 'P', 'Q': 'Q', 'R': 'R', 'S': 'S', 'T': 'T', 'U': 'U', 
+    'V': 'V', 'W': 'W', 'X': 'X', 'Y': 'Y', 'Z': 'Z', 'PROB': 'PROB'
+}
+
+char_index_map = {char: index for index, char in enumerate(cyrillic_to_latin_mapping.keys())}
+
+
+
+
+num_letters = len(cyrillic_to_latin_mapping.keys())  # Th
 
 
 latin_to_cyrillic_mapping = {value: key for key, value in cyrillic_to_latin_mapping.items()}
@@ -1316,43 +1334,4 @@ transitions = ['АБ',
  'ЭЯ',
  'ЮЯ']
 
-
-cyrillic_to_latin_mapping_ddf = {
-    "А": "A",  
-    "Б": "B",
-    "В": "V",
-    "Г": "G",
-    "Д": "D",
-    "Е": "E",
-    "Ё": "YO",
-    "Ж": "ZH",
-    "З": "Z",
-    "И": "I",
-    "Й": "Y",
-    "К": "K",
-    "Л": "L",
-    "М": "M",
-    "Н": "N",
-    "О": "O",
-    "П": "P",
-    "Р": "R",
-    "С": "S",
-    "Т": "T",
-    "У": "U",
-    "Ф": "F",
-    "Х": "H",
-    "Ц": "TS",
-    "Ч": "CH",
-    "Ш": "SH",
-    "Щ": "SHCH",
-    "Ъ": "HARD",  # No direct equivalent
-    "Ы": "YI",
-    "Ь": "SOFT",  # No direct equivalent
-    "Э": "EE",
-    "Ю": "YU",
-    "Я": "YA",
-    "space": "_"
-    # The following Cyrillic letters do not have direct Latin equivalents:
-    #  Ъ, Ь
-}
 
