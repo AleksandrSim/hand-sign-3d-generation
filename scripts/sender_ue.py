@@ -1,24 +1,31 @@
 import time
 import queue
-import requests
 import warnings
 import threading
 import multiprocessing
 
 import numpy as np
+import requests
 
 from src.control.config import ALL_CTRL
+from src.control.filters import Filters, interpolate_sequences
 from scripts.retrive_data import filter_non_zero
 from src.control.sequences import PHRASES
 from src.process_data.utils import char_index_map
 from src.control.control_rig import get_control_rig
 from src.control.language_engine import transform_to_list
-from src.control.filters import Filters, interpolate_sequences
 
-
+# Address of the Unreal Engine server
+ADDRESS = "http://localhost:30010"
+# Path to the endpoint in the Unreal Engine server
+ENDPOINT = "/remote/preset/RCP_Hand/function/Set%20Hand%20Pose"
+# Path to the file with the master sequence
+DATA_PATH = "data/sequence/master_eng.npz"
 FPS = 30
 FRAME_TIME = 1.0 / FPS
-SKIP_FRAMES_RATE = 3
+# Rate of frames to skip (useful for speeding up sequences when FPS control
+# is insufficient due to, e.g., limited compute power)
+SKIP_FRAMES_RATE = 1
 TIMEOUT = 0.1
 SLEEP_TIME = 0.1  # Sleep time to check if we have a new input
 
@@ -54,7 +61,9 @@ def send_data(m_queue: multiprocessing.Queue, url: str):
         except queue.Empty:  # Here queue is a mudule, not a class entity
             pass
         except Exception as e:
-            warnings.warn(f"Error occurred while sending data: {e}")
+            warnings.warn(f"Error occurred while sending data: {e}",
+                          stacklevel=2)
+
 
 def listen_input(data_queue: multiprocessing.Queue):
     while True:
@@ -63,14 +72,15 @@ def listen_input(data_queue: multiprocessing.Queue):
             txt_sequence = transform_to_list(user_input, list(PHRASES.keys()))
             get_queued_data(txt=txt_sequence, data_queue=data_queue)
 
-
         except KeyboardInterrupt:
             break
         time.sleep(SLEEP_TIME)
 
+
 def get_queued_data(txt: list[str], data_queue: multiprocessing.Queue):
     if len(txt) <= 1:
-        warnings.warn(f"{txt} is not a valid sequence. We support > 1 letters")
+        warnings.warn(f"{txt} is not a valid sequence. We support > 1 letters",
+                      stacklevel=2)
         return
     seqs: list[tuple[np.ndarray, str]] = []
     for i in range(len(txt)-1):
@@ -78,12 +88,14 @@ def get_queued_data(txt: list[str], data_queue: multiprocessing.Queue):
             seqs.append((PHRASES[txt[i]], txt[i]))
         elif txt[i] in char_index_map and txt[i+1] in char_index_map:
             if i < len(txt)-2:
-                interpolated_data = interpolate_sequences(data,char_index_map[txt[i]], 
-                                    char_index_map[txt[i+1]], char_index_map[txt[i+2]])
+                interpolated_data = interpolate_sequences(
+                    data, char_index_map[txt[i]],
+                    char_index_map[txt[i+1]], char_index_map[txt[i+2]])
                 seqs.append((interpolated_data, txt[i]))
             else:
-                seqs.append((filter_non_zero(data[char_index_map[txt[i]],
-                            char_index_map[txt[i+1]], :, :, :]), txt[i]))
+                seqs.append((filter_non_zero(
+                    data[char_index_map[txt[i]],
+                         char_index_map[txt[i+1]], :, :, :]), txt[i]))
 
     if txt[-1] in PHRASES:
         # Deal with the case when a keyphrase at the end of the sequence
@@ -100,14 +112,11 @@ def get_queued_data(txt: list[str], data_queue: multiprocessing.Queue):
         data_queue.put(rig)
 
 
-
 if __name__ == "__main__":
-    data_path = 'data/sequence/unified_data_master.npz'
-    data = np.load(data_path)['data']
+    data = np.load(DATA_PATH)['data']
 
     # Define the URL where characters will be sent
-    # endpoint_url = "http://127.0.0.1:8000"
-    endpoint_url = "http://localhost:30010/remote/preset/RCP_Hand/function/Set%20Hand%20Pose"
+    endpoint_url = ADDRESS + ENDPOINT
 
     # Create a multiprocessing queue for communication between processes
     data_queue = multiprocessing.Queue()
