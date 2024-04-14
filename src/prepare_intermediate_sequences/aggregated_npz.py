@@ -51,7 +51,6 @@ class UnifiedDataBuilder:
 
             reverse_transition = end_letter + '_' + start_letter
             if reverse_transition not in json_data:
-                print(reverse_transition)
                 for kp_index in range(extracted_keypoints.shape[0]):
                     for xyz_index in range(3):
                         # Find the actual length of meaningful data to avoid reversing the padding

@@ -105,7 +105,7 @@ class HandTransitionVisualizer:
 if __name__ == '__main__':
     path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/master_eng.npz'
     data = np.load(path)['data']
-    visualizer = HandTransitionVisualizer(data, 'B', 'C')
+    visualizer = HandTransitionVisualizer(data, 'A', 'B')
     visualizer.find_missing_transitions()
     visualizer.fill_missing_with_reverse()
 #    visualizer.save_to_npz('/Users/aleksandrsimonyan/Desktop/complete_sequence/unified_data_reverse_inc.npz')
