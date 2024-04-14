@@ -102,8 +102,11 @@ def get_queued_data(txt: list[str], data_queue: multiprocessing.Queue):
 
 
 if __name__ == "__main__":
-    data_path = 'data/sequence/unified_data_master.npz'
+    data_path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/master_eng.npz'
     data = np.load(data_path)['data']
+    data = data[:,:,:,1:20,:]
+
+
 
     # Define the URL where characters will be sent
     # endpoint_url = "http://127.0.0.1:8000"
