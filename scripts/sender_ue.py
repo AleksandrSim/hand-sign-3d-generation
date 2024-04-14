@@ -9,10 +9,10 @@ import requests
 
 from src.control.config import ALL_CTRL
 from src.control.filters import Filters, interpolate_sequences
-from scripts.retrive_data import filter_non_zero
 from src.control.sequences import PHRASES
 from src.process_data.utils import char_index_map
 from src.control.control_rig import get_control_rig
+from src.process_data.sequence import filter_non_zero
 from src.control.language_engine import transform_to_list
 
 # Address of the Unreal Engine server

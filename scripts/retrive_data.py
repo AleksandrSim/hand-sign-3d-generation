@@ -1,39 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.process_data.utils import HAND_BONES, HAND_BONES_CONNECTIONS
-from src.process_data.aggregated_npz import char_index_map
+from src.process_data.utils import HAND_BONES, HAND_BONES_CONNECTIONS, \
+    char_index_map
+from src.process_data.sequence import filter_non_zero
 
 HAND_BONES_INDEXES = list(range(20))
-
-
-# Assuming HAND_BONES, HAND_BONES_CONNECTIONS, and char_index_map are defined as before
-
-
-
-def filter_non_zero(seq: np.array) -> np.array:
-
-    """
-    Filters the input array to remove trailing zeros across all dimensions
-    based on the first occurrence of an all-zero slice in the last dimension.
-    
-    Args:
-    seq (np.ndarray): A numpy array with an expected shape of (3, 19, 1050).
-    
-    Returns:
-    np.ndarray: The filtered numpy array with trailing zeros removed in the last dimension.
-    
-    Note:
-    This function asserts that the input array matches the expected shape.
-    """
-
-#    assert seq.shape == (3, 19, 1050), "Input array does not match the expected shape (3, 19, 1050)"
-    
-    non_zero_mask = np.all(seq == 0, axis=(0,1))
-    index = np.argmax(non_zero_mask)
-    seq = seq[:,:, :index]
-    return seq
-
 
 
 class HandTransitionVisualizer:
@@ -42,7 +14,7 @@ class HandTransitionVisualizer:
         self.visualize = visualize
 
         self.data = self.load_data(npz_path)
-        ret = filter_non_zero(self.data[0,5])
+        ret = filter_non_zero(self.data[0, 5])
         print(ret.shape)
         for i in range(ret.shape[1]):  # Loop through each joint
             # Extract xyz coordinates for current joint
@@ -86,7 +58,9 @@ class HandTransitionVisualizer:
             frame_data = transition_data[:, :, frame_index]
             print(frame_data.shape)
             self.ax.set_title(
-                f"Transition {transition_index + 1}/{len(self.transitions_data)}, Frame: {frame_index + 1}/{transition_data.shape[-1]}")
+                (f"Transition {transition_index + 1}/"
+                 f"{len(self.transitions_data)}, Frame: {frame_index + 1}/"
+                 f"{transition_data.shape[-1]}"))
 
             for x, y, z in frame_data.T:
                 self.ax.scatter(x, y, z, c='r', marker='o')
@@ -94,9 +68,10 @@ class HandTransitionVisualizer:
             for start_bone, end_bone in HAND_BONES_CONNECTIONS:
                 start_idx = HAND_BONES.index(start_bone)
                 end_idx = HAND_BONES.index(end_bone)
-                self.ax.plot([frame_data[0, start_idx], frame_data[0, end_idx]],
-                             [frame_data[1, start_idx], frame_data[1, end_idx]],
-                             [frame_data[2, start_idx], frame_data[2, end_idx]], 'r')
+                self.ax.plot(
+                    [frame_data[0, start_idx], frame_data[0, end_idx]],
+                    [frame_data[1, start_idx], frame_data[1, end_idx]],
+                    [frame_data[2, start_idx], frame_data[2, end_idx]], 'r')
             plt.draw()
 
     def on_key(self, event):
@@ -138,7 +113,8 @@ class HandTransitionVisualizer:
 
 if __name__ == '__main__':
     # Example usage
-    npz_path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/master_eng.npz'
+    data_path = '/Users/aleksandrsimonyan/Desktop/complete_sequence/'
+    npz_path = data_path + 'english_full/master_eng.npz'
     word = "ARARAT"
     visualize = True  # Set to False to return data, True - for visualization
 
