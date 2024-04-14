@@ -1,14 +1,14 @@
 import numpy as np
 
 from src.control.config import CONTROLS, NEUTRAL_POSE
-from scripts.retrive_data import HAND_BONES
 from src.control.geometry import get_ort_plane, angle_between_vectors, \
     get_angle_by_3_points, project_vector_onto_plane
+from src.process_data.utils import HAND_BONES
 
 
 def get_hand_orientation(xyz: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     joints_idx = [HAND_BONES.index(p) for p in
-                  ['RightFinger2Proximal', 'RightFinger3Metacarpal',
+                  ['RightFinger2Proximal', 'RightHand',
                    'RightFinger5Proximal']]
     xyz_hand = np.take(xyz, joints_idx, axis=1).T
     xyz_hand -= xyz_hand[1, :]  # Define the origin of the hand
@@ -49,7 +49,7 @@ def get_finger_angle(xyz: np.ndarray, keypoints: tuple[str, str, str],
     p0 = xyz[:, HAND_BONES.index(keypoints[0])]
     p1 = xyz[:, HAND_BONES.index(keypoints[1])]
     p2 = xyz[:, HAND_BONES.index(keypoints[2])]
-    # Apply to proximal joint of the selected fingers, which can hav lateral
+    # Apply to proximal joint of the selected fingers, which can have lateral
     # movement
     if 'Proximal' in keypoints[1] and any(n in keypoints[1]
                                           for n in ['2', '3', '4', '5']):
@@ -71,7 +71,7 @@ def get_control_rig(xyz: np.ndarray) -> dict[str, tuple[float, float, float]]:
     """Get the control rig angles from a given set of keypoints.
 
     Args:
-        xyz (np.ndarray): The keypoints of the hand. Shape is (3, 19).
+        xyz (np.ndarray): The keypoints of the hand. Shape is (3, 20).
 
     Returns:
         dict[str, tuple[float, float, float]]: The resulted control rig angles.
@@ -99,7 +99,7 @@ def get_control_rig(xyz: np.ndarray) -> dict[str, tuple[float, float, float]]:
             pose = control_rig[ctrl]
             control_rig[ctrl] = tuple(pose_i - neutral_i
                                       for pose_i, neutral_i
-                                      in zip(pose, neutral))
+                                      in zip(pose, neutral, strict=True))
         else:
             control_rig[ctrl] = neutral
 
