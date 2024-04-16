@@ -5,8 +5,7 @@ import argparse
 import bpy
 import numpy as np
 
-sys.path.append('')
-#TODO get rid of sys!
+#sys.path.append('')
 
 from src.process_data.utils import HAND_BONES
 
