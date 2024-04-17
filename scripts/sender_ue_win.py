@@ -22,16 +22,16 @@ from src.control.language_engine import transform_to_list
 ADDRESS = "http://localhost:30010"
 ENDPOINT = "/remote/preset/RCP_Hand/function/Set%20Hand%20Pose"
 DATA_PATH = "C:\\Users\\asimonyan\\Desktop\\ue5\\master_eng.npz"
-FPS = 240
+FPS = 100
 FRAME_TIME = 1.0 / FPS
-SKIP_FRAMES_RATE = 1
-TIMEOUT = 0.0001
-SLEEP_TIME = 0.0001
+SKIP_FRAMES_RATE = 2
+TIMEOUT = 0.01
+SLEEP_TIME = 0.01
 
 filters = Filters()
 
 def send_data(m_queue: multiprocessing.Queue, url: str):
-#    curr = 0
+    curr = 0
     session = Session()  # Create a session object
     while True:
         try:
@@ -41,7 +41,7 @@ def send_data(m_queue: multiprocessing.Queue, url: str):
                 payload = {}
                 for ctrl in ALL_CTRL:
                     if ctrl in s:
- #                       print(f'Currently processing {curr}')
+                        print(f'Currently processing {curr}')
                         curr += 1
                         angle = s[ctrl]
                         payload[ctrl] = {"Roll": angle[0], "Pitch": angle[1], "Yaw": angle[2]}
