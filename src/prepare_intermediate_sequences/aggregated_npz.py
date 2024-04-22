@@ -38,7 +38,6 @@ class UnifiedDataBuilder:
             # Adjust to reflect the correct starting point and duration
             if start_frame + duration - 1 <= npz_data.shape[2]:
                 extracted_keypoints = npz_data[:, :, start_frame-1:start_frame-1+duration]
-                print(extracted_keypoints)
             else:
                 skipped_transitions.append(transition)
                 continue  # Skip this iteration if the range is out of bounds

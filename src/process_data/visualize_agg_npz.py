@@ -7,7 +7,6 @@ from src.process_data.utils import char_index_map
 
 from utils import HAND_BONES, HAND_BONES_CONNECTIONS
 HAND_BONES_INDEXES = list(range(20))
-print(char_index_map)
 
 
 

@@ -29,7 +29,7 @@ NEUTRAL_POSE: dict[str, tuple[float, float, float]] = {
     'Pinky 02 R Ctrl': (0.0, 0.0, -20.0),
     'Pinky 03 R Ctrl': (0.0, 0.0, -8.0),
     'Wrist R Ctrl': (0.0, 0.0, 0.0),
-    'Lowerarm R Ctrl': (0.0, 0.0, 65.0),
+    'Lowerarm R Ctrl': (-30, 100.0, 65.0),
     'Upperarm R Ctrl': (30.0, 0.0, 0.0)
 }
 

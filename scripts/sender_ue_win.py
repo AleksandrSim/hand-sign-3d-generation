@@ -1,13 +1,14 @@
+import os
+import sys
 import time
 import queue
 import warnings
 import multiprocessing
 import numpy as np
 import requests
-
 import tkinter as tk
-from requests import Session
 from tkinter import messagebox
+from requests import Session
 
 # Importing necessary modules from your custom package
 from src.control.config import ALL_CTRL
@@ -21,18 +22,19 @@ from src.control.language_engine import transform_to_list
 # Constants for server communication and process handling
 ADDRESS = "http://localhost:30010"
 ENDPOINT = "/remote/preset/RCP_Hand/function/Set%20Hand%20Pose"
-DATA_PATH = "C:\\Users\\asimonyan\\Desktop\\ue5\\master_eng.npz"
-FPS = 240
+DATA_PATH = "/Users/aleksandrsimonyan/Downloads/master_eng.npz"
+FPS = 100
 FRAME_TIME = 1.0 / FPS
-SKIP_FRAMES_RATE = 1
-TIMEOUT = 0.0001
-SLEEP_TIME = 0.0001
+SKIP_FRAMES_RATE = 2
+TIMEOUT = 0.01
+SLEEP_TIME = 0.01
+TARGET_FRAME_N = 100
 
 filters = Filters()
 
 def send_data(m_queue: multiprocessing.Queue, url: str):
-#    curr = 0
-    session = Session()  # Create a session object
+    curr = 0
+    session = Session()
     while True:
         try:
             if not m_queue.empty():
@@ -41,13 +43,11 @@ def send_data(m_queue: multiprocessing.Queue, url: str):
                 payload = {}
                 for ctrl in ALL_CTRL:
                     if ctrl in s:
- #                       print(f'Currently processing {curr}')
                         curr += 1
                         angle = s[ctrl]
                         payload[ctrl] = {"Roll": angle[0], "Pitch": angle[1], "Yaw": angle[2]}
                     else:
                         payload[ctrl] = {"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0}
-
                 session.put(url, json={"Parameters": payload, "generateTransaction": True}, timeout=1.0)
                 send_time = time.perf_counter() - start_t
                 time.sleep(max(FRAME_TIME - send_time, 0.0))
@@ -58,11 +58,12 @@ def send_data(m_queue: multiprocessing.Queue, url: str):
         except Exception as e:
             warnings.warn(f"Error occurred while sending data: {e}", stacklevel=2)
 
-def get_queued_data(txt: list[str], data_queue: multiprocessing.Queue, data):
+def get_queued_data(txt: list[str], data_queue: multiprocessing.Queue, data, target_frame_n = 250):
     if len(txt) <= 1:
         warnings.warn(f"{txt} is not a valid sequence. We support > 1 letters", stacklevel=2)
         return
     seqs = []
+    txt = ['_'] + txt 
     for i in range(len(txt)-1):
         if txt[i] in PHRASES:
             seqs.append((PHRASES[txt[i]], txt[i]))
@@ -80,14 +81,19 @@ def get_queued_data(txt: list[str], data_queue: multiprocessing.Queue, data):
         seqs.append((PHRASES[txt[-1]], txt[-1]))
     rigs = []
     for seq in seqs:
+        skip_frame_rate = int(seq[0].shape[-1] / target_frame_n)
         rig_seq = [get_control_rig(seq[0][:, :, i])
-                   for i in range(0, seq[0].shape[-1], SKIP_FRAMES_RATE)]
+                   for i in range(0, seq[0].shape[-1], skip_frame_rate )]
         rig_seq = filters(rig_seq)
         rigs.append(rig_seq)
     filters.reset()
     rigs = [pose for rig in rigs for pose in rig]
     for rig in rigs:
         data_queue.put(rig)
+
+def restart_program():
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
 
 def main():
     data = np.load(DATA_PATH)['data']
@@ -106,10 +112,13 @@ def main():
     def on_submit():
         user_input = input_field.get()
         txt_sequence = transform_to_list(user_input, list(PHRASES.keys()))
-        get_queued_data(txt=txt_sequence, data_queue=data_queue, data=data)
+        get_queued_data(txt=txt_sequence, data_queue=data_queue, data=data, target_frame_n=TARGET_FRAME_N)
 
     submit_button = tk.Button(root, text="Submit", command=on_submit)
     submit_button.pack(padx=20, pady=20)
+
+    restart_button = tk.Button(root, text="Restart", command=restart_program)
+    restart_button.pack(padx=20, pady=20)
 
     def on_closing():
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
@@ -119,6 +128,7 @@ def main():
 
     root.protocol("WM_DELETE_WINDOW", on_closing)
     root.mainloop()
+    
 
 if __name__ == '__main__':
     main()
