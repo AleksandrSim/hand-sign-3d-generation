@@ -1,0 +1,69 @@
+import os
+import json
+import numpy as np
+
+from src.process_data.utils import char_index_map
+from src.process_data.utils import HAND_BONES
+
+class UnifiedDataBuilder:
+    def __init__(self, json_path, npz_dir, output_path):
+        self.json_path = json_path
+        self.npz_dir = npz_dir
+        self.output_path = output_path
+
+    def load_json(self):
+        with open(self.json_path, 'r') as file:
+            return json.load(file)
+
+    def load_npz(self, npz_file):
+        return np.load(os.path.join(self.npz_dir, npz_file.replace('json', 'npz')))
+
+    def find_max_transition_length(self, json_data):
+        return max(int(duration) for _, (duration, _, _) in json_data.items())
+
+    def extract_and_compile_data(self):
+        json_data = self.load_json()
+        max_transition_length = self.find_max_transition_length(json_data)
+        # Adjust for quaternion data: 4 components (w, x, y, z)
+        compiled_data = np.zeros((len(char_index_map), len(char_index_map), 4, len(HAND_BONES), max_transition_length))
+        skipped_transitions = []
+
+        for transition, (duration, start_frame, npz_file) in json_data.items():
+            print(f"Processing transition: {transition}")
+            start_letter, end_letter = transition.split('_')
+            start_index = char_index_map[start_letter]
+            end_index = char_index_map[end_letter]
+            start_frame = int(start_frame)
+            duration = int(duration)
+            npz_data = self.load_npz(npz_file)['data']
+
+            if start_frame + duration - 1 <= npz_data.shape[2]:
+                # Extract the relevant slice from the data
+                extracted_quaternions = npz_data[:, :, start_frame - 1 : start_frame - 1 + duration]
+            else:
+                skipped_transitions.append(transition)
+                continue
+
+            for kp_index in range(extracted_quaternions.shape[0]):
+                for quat_index in range(4):  # Processing each quaternion component
+                    compiled_data[start_index, end_index, quat_index, kp_index, :duration] = extracted_quaternions[kp_index, quat_index, :]
+
+            # Check if the reverse transition exists and handle accordingly
+            reverse_transition = f"{end_letter}_{start_letter}"
+            if reverse_transition not in json_data:
+                for kp_index in range(extracted_quaternions.shape[0]):
+                    for quat_index in range(4):
+                        actual_data_length = np.max(np.where(extracted_quaternions[kp_index, quat_index, :] != 0)) + 1
+                        reversed_data = extracted_quaternions[kp_index, quat_index, :actual_data_length][::-1]
+                        compiled_data[end_index, start_index, quat_index, kp_index, :actual_data_length] = reversed_data
+
+        np.savez_compressed(self.output_path, data=compiled_data)
+        if skipped_transitions:
+            print("Skipped transitions due to mismatched duration or out-of-bounds frame indices:", skipped_transitions)
+
+if __name__ == "__main__":
+    json_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/adjust_all_eng.json"
+    npz_dir = "/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/npz_quat"
+    output_path = "/Users/aleksandrsimonyan/Desktop/complete_sequence/english_full/master_eng_quant.npz"
+    builder = UnifiedDataBuilder(json_path, npz_dir, output_path)
+    builder.extract_and_compile_data()

@@ -5,36 +5,40 @@ import numpy as np
 
 
 HAND_BONES_CONNECTIONS = [
-    ('RightHand', 'RightFinger5Metacarpal'),
-    ('RightHand', 'RightFinger4Metacarpal'),
-    ('RightHand', 'RightFinger3Metacarpal'),
-    ('RightHand', 'RightFinger2Metacarpal'),
-    ('RightHand', 'RightFinger1Metacarpal'),
+    ('RightShoulder', 'RightArm'),
+    ('RightArm', 'RightForeArm'),
+    ('RightForeArm', 'RightHand'),
 
+    ('RightHand', 'RightFinger1Metacarpal'),
     ('RightFinger1Metacarpal', 'RightFinger1Proximal'),
     ('RightFinger1Proximal', 'RightFinger1Distal'),
-#    ('RightFinger1Distal', 'RightFinger1Tip'),
-    
+    # ('RightFinger1Distal', 'RightFinger1Tip'),
+
+    ('RightHand', 'RightFinger2Metacarpal'),
     ('RightFinger2Metacarpal', 'RightFinger2Proximal'),
     ('RightFinger2Proximal', 'RightFinger2Medial'),
     ('RightFinger2Medial', 'RightFinger2Distal'),
-#    ('RightFinger2Distal', 'RightFinger2Tip'),
-    
+    # ('RightFinger2Distal', 'RightFinger2Tip'),
+
+    ('RightHand', 'RightFinger3Metacarpal'),
     ('RightFinger3Metacarpal', 'RightFinger3Proximal'),
     ('RightFinger3Proximal', 'RightFinger3Medial'),
     ('RightFinger3Medial', 'RightFinger3Distal'),
-#    ('RightFinger3Distal', 'RightFinger3Tip'),
-    
+    # ('RightFinger3Distal', 'RightFinger3Tip'),
+
+    ('RightHand', 'RightFinger4Metacarpal'),
     ('RightFinger4Metacarpal', 'RightFinger4Proximal'),
     ('RightFinger4Proximal', 'RightFinger4Medial'),
     ('RightFinger4Medial', 'RightFinger4Distal'),
-#    ('RightFinger4Distal', 'RightFinger4Tip'),
-    
+    # ('RightFinger4Distal', 'RightFinger4Tip'),
+
+    ('RightHand', 'RightFinger5Metacarpal'),
     ('RightFinger5Metacarpal', 'RightFinger5Proximal'),
     ('RightFinger5Proximal', 'RightFinger5Medial'),
     ('RightFinger5Medial', 'RightFinger5Distal'),
-#    ('RightFinger5Distal', 'RightFinger5Tip')
+    # ('RightFinger5Distal', 'RightFinger5Tip')
 ]
+
 
 HAND_BONES = ['RightHand',
               'RightFinger1Metacarpal', 'RightFinger1Proximal', 'RightFinger1Distal', 'RightFinger5Metacarpal',
@@ -43,6 +47,14 @@ HAND_BONES = ['RightHand',
                   'RightFinger3Proximal', 'RightFinger3Medial', 'RightFinger3Distal', 'RightFinger2Metacarpal', 
                   'RightFinger2Proximal', 'RightFinger2Medial', 'RightFinger2Distal']
 
+
+HAND_BONES = ['RightShoulder', 'RightForeArm', 'RightArm',
+     'RightHand', 'RightFinger1Metacarpal', 'RightFinger1Proximal', 'RightFinger1Distal',
+    'RightFinger5Metacarpal', 'RightFinger5Proximal', 'RightFinger5Medial', 'RightFinger5Distal',
+    'RightFinger4Metacarpal', 'RightFinger4Proximal', 'RightFinger4Medial', 'RightFinger4Distal',
+    'RightFinger3Metacarpal', 'RightFinger3Proximal', 'RightFinger3Medial', 'RightFinger3Distal',
+    'RightFinger2Metacarpal', 'RightFinger2Proximal', 'RightFinger2Medial', 'RightFinger2Distal'
+]
 
 '''
 cyrillic_to_latin_mapping = {
