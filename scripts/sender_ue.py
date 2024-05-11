@@ -8,7 +8,7 @@ import numpy as np
 import requests
 
 from src.control.config import ALL_CTRL
-from src.control.filters import Filters, interpolate_sequences
+from src.control.filters import Filters, double_char, interpolate_sequences
 from src.control.sequences import PHRASES
 from src.process_data.utils import char_index_map
 from src.control.control_rig import get_control_rig
@@ -67,29 +67,47 @@ def get_queued_data(txt: list[str], data_queue: multiprocessing.Queue):
             stacklevel=2
         )
         return
-    seqs: list[tuple[np.ndarray, str]] = []
+    seqs: list[tuple[np.ndarray | None, str]] = []
     for i in range(len(txt)-1):
         if txt[i] in PHRASES:
             seqs.append((PHRASES[txt[i]], txt[i]))
-        elif txt[i] in char_index_map and txt[i+1] in char_index_map:
-            if i < len(txt)-2:
-                interpolated_data = interpolate_sequences(
-                    data, char_index_map[txt[i]],
-                    char_index_map[txt[i+1]], char_index_map[txt[i+2]])
-                seqs.append((interpolated_data, txt[i]))
-            else:
-                seqs.append((filter_non_zero(
-                    data[char_index_map[txt[i]],
-                         char_index_map[txt[i+1]], :, :, :]), txt[i]))
+        elif txt[i] in char_index_map:
+            if txt[i] == txt[i+1]:
+                # None is an indication to double the previous letter
+                seqs.append((None, txt[i]))
+            elif txt[i+1] in char_index_map:
+                if i < len(txt)-2:
+                    if txt[i] != txt[i+1] != txt[i+2]\
+                            and 'PROB' not in txt[i:i+3]:
+                        transition = interpolate_sequences(
+                            data, char_index_map[txt[i]],
+                            char_index_map[txt[i+1]], char_index_map[txt[i+2]])
+                    else:
+                        transition = filter_non_zero(
+                            data[char_index_map[txt[i]],
+                                 char_index_map[txt[i+1]], :, :, :])
+                    seqs.append((transition, txt[i]))
+                else:
+                    seqs.append((filter_non_zero(
+                        data[char_index_map[txt[i]],
+                             char_index_map[txt[i+1]], :, :, :]), txt[i]))
+        else:
+            warnings.warn(f'{txt[i]} is an unknown character', stacklevel=2)
 
     if txt[-1] in PHRASES:
         seqs.append((PHRASES[txt[-1]], txt[-1]))
     rigs = []
     for seq in seqs:
-        rig_seq = [get_control_rig(seq[0][:, :, i])
-                   for i in range(0, seq[0].shape[-1], SKIP_FRAMES_RATE)]
-        rig_seq = filters(rig_seq)
-        rigs.append(rig_seq)
+        if seq[0] is None:
+            # Add doubling of the previous letter
+            last_rig = rigs[-1][-1]
+            rig_seq = double_char(last_rig)
+            rigs.append(rig_seq)
+        else:
+            rig_seq = [get_control_rig(seq[0][:, :, i])
+                       for i in range(0, seq[0].shape[-1], SKIP_FRAMES_RATE)]
+            rig_seq = filters(rig_seq)
+            rigs.append(rig_seq)
     filters.reset()
     rigs = [pose for rig in rigs for pose in rig]
     for rig in rigs:
