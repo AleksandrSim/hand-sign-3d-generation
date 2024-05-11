@@ -2,6 +2,13 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+from src.control.config import RETENTION_FRAMES, TRANSITION_FRAMES, \
+    DOUBLECHAR_TRANSITION_DEG
+
+# Double character transition amplitude in degrees
+LOWERARM_TRANSITION = (0.0, DOUBLECHAR_TRANSITION_DEG,
+                       -DOUBLECHAR_TRANSITION_DEG * 2.0 / 3.0)
+
 
 class Filter(ABC):
     @abstractmethod
@@ -78,3 +85,30 @@ def interpolate_sequences(data, start_idx: int, end_idx: int,
         transition_data = np.concatenate(
             (transition_data[:, :, :], interpolated_frames_squeezed), axis=2)
     return transition_data
+
+
+def arm_transition(arm_pos: tuple[float, float, float], step: int,
+                   total_steps: int, transition: tuple[float, float, float])\
+        -> tuple[float, float, float]:
+    step_pos = tuple((transition[i] * step / total_steps
+                      + arm_pos[i] for i in range(3)))
+    return step_pos
+
+
+def double_char(start_rig: dict[str, tuple[float, float, float]])\
+        -> list[dict[str, tuple[float, float, float]]]:
+    start_arm_pos = start_rig['Lowerarm R Ctrl']
+    rigs: list[dict[str, tuple[float, float, float]]] = []
+    for i in range(TRANSITION_FRAMES):
+        step_rig = dict(start_rig)
+        step_rig['Lowerarm R Ctrl'] = arm_transition(
+            start_arm_pos, i, TRANSITION_FRAMES, LOWERARM_TRANSITION)
+        rigs.append(step_rig)
+    for _ in range(RETENTION_FRAMES):
+        rigs.append(rigs[-1])
+    for i in range(TRANSITION_FRAMES, 0, -1):
+        step_rig = dict(start_rig)
+        step_rig['Lowerarm R Ctrl'] = arm_transition(
+            start_arm_pos, i, TRANSITION_FRAMES, LOWERARM_TRANSITION)
+        rigs.append(step_rig)
+    return rigs

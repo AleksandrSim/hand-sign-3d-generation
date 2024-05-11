@@ -1,4 +1,3 @@
-
 # List of all controls we have
 ALL_CTRL = [
     "Thumb 01 R Ctrl", "Thumb 02 R Ctrl", "Thumb 03 R Ctrl",
@@ -61,3 +60,9 @@ CONTROLS = {
                         'RightFinger5Distal'),
     'Pinky 03 R Ctrl': ('Pinky 02 R Ctrl', ),
 }
+
+
+# Double char control
+TRANSITION_FRAMES = 10  # Number of frames for transition in double char
+RETENTION_FRAMES = 7  # Number of frames to hold the 2nd letter in double char
+DOUBLECHAR_TRANSITION_DEG = 10.0  # Angle amplitude to swing arm in double char

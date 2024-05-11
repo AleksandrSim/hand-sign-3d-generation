@@ -4,7 +4,7 @@ import numpy as np
 
 # Fill the dictionary with prerecorded sequences, for example:
 #      'name': np.load('data/sequence/Hello_my_name_is.npz'),
-PHRASES = {
+PHRASES: dict[str, np.ndarray] = {
 }
 
 # TODO We need sequences of shape (3, 20, N), while the prerecorded data is

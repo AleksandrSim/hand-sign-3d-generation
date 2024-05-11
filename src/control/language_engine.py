@@ -1,6 +1,7 @@
-"""
-Tools to transform input string into sequence of characters, including
-special characters, specified in angle brackets, like '<name>' or '<from>'.
+"""Tools to transform input string into sequence of characters.
+
+It also includes special characters, specified in angle brackets,
+like '<name>' or '<from>'.
 
 The current implementation ignores all punctuation symbols and numbers.
 
@@ -31,7 +32,7 @@ def transform_to_list(input_string: str, special_sequences: list[str])\
             if word in special_sequences:
                 output_list.append(word)
             else:
-                warnings.warn(f'Unknown keyword: {word}')
+                warnings.warn(f'Unknown keyword: {word}', stacklevel=1)
             word = ""
         elif char.isalpha():
             word += char
@@ -40,8 +41,8 @@ def transform_to_list(input_string: str, special_sequences: list[str])\
                 output_list.extend(transform_word(word))
                 word = ""
             # Avoid multiple whitespaces
-            if len(output_list) > 0 and output_list[-1] != 'prob':
-                output_list.append('prob')
+            if len(output_list) > 0 and output_list[-1] != 'PROB':
+                output_list.append('PROB')
 
     if word:
         if in_angle_brackets and word in special_sequences:
